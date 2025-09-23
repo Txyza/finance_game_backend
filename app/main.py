@@ -9,9 +9,15 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="Finance Game API",
-    openapi_url=f"{settings.API_V1_STR}/openapi.json" if settings.ENVIRONMENT != "production" else None,
-    docs_url=f"{settings.API_V1_STR}/docs" if settings.ENVIRONMENT != "production" else None,
-    redoc_url=f"{settings.API_V1_STR}/redoc" if settings.ENVIRONMENT != "production" else None,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    if settings.ENVIRONMENT != "production"
+    else None,
+    docs_url=f"{settings.API_V1_STR}/docs"
+    if settings.ENVIRONMENT != "production"
+    else None,
+    redoc_url=f"{settings.API_V1_STR}/redoc"
+    if settings.ENVIRONMENT != "production"
+    else None,
     default_response_class=ORJSONResponse,
 )
 

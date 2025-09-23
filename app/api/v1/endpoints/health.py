@@ -5,13 +5,13 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
-from app.api.v1.deps.database import get_db
+from app.db.database import get_session
 
 router = APIRouter()
 
 
 @router.get("/health", status_code=status.HTTP_200_OK)
-async def health_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+async def health_check(db: AsyncSession = Depends(get_session)) -> Dict[str, Any]:
     """
     Health check endpoint
     """
@@ -27,5 +27,5 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
         "timestamp": datetime.utcnow().isoformat(),
         "service": "finance-game-api",
         "version": "1.0.0",
-        "database": db_status
+        "database": db_status,
     }

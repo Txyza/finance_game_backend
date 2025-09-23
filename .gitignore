@@ -207,3 +207,4 @@ logs/
 # Claude tasks
 /tasks/
 .claude
+*AGENTS.md

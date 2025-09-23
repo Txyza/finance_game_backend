@@ -29,9 +29,22 @@ help: ## Show help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "Usage with profiles:"
+	@echo "  $(YELLOW)make lint PROFILE=dev$(NC)   - lint ruff and mypy"
+	@echo "  $(YELLOW)make format PROFILE=dev$(NC)   - ruff format & ruff check --fix"
 	@echo "  $(YELLOW)make build PROFILE=dev$(NC)   - Build development images"
 	@echo "  $(YELLOW)make run PROFILE=prod$(NC)    - Run production environment"
 	@echo "  $(YELLOW)make stop$(NC)                 - Stop current environment"
+
+# Lint Commands
+lint: ## lint code
+	ruff check
+	ruff format --check
+	mypy .
+
+# Format Commands
+format: ## lint code
+	ruff format
+	ruff check --fix
 
 # Build Commands
 build: ## Build Docker images (use PROFILE=dev|prod)

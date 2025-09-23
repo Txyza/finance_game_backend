@@ -1,5 +1,7 @@
 import asyncio
 from logging.config import fileConfig
+from typing import Any
+
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -69,8 +71,8 @@ async def run_async_migrations() -> None:
 
     """
 
-    configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = get_url()
+    configuration: dict[str, Any] = {"sqlalchemy.url": get_url()}
+
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
