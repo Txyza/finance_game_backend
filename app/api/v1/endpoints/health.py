@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, Any
 
 from fastapi import APIRouter, Depends, status
@@ -7,7 +7,7 @@ from sqlalchemy import text
 
 from app.db.database import get_session
 
-router = APIRouter()
+router = APIRouter(tags=["health"])
 
 
 @router.get("/health", status_code=status.HTTP_200_OK)
@@ -24,7 +24,7 @@ async def health_check(db: AsyncSession = Depends(get_session)) -> Dict[str, Any
 
     return {
         "status": "ok",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "service": "finance-game-api",
         "version": "1.0.0",
         "database": db_status,

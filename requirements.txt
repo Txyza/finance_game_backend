@@ -9,6 +9,7 @@ python-multipart==0.0.20
 sqlalchemy==2.0.43
 asyncpg==0.30.0
 alembic==1.16.5
+greenlet==3.2.4
 
 # Redis
 redis==6.4.0

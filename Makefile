@@ -42,7 +42,7 @@ lint: ## lint code
 	mypy .
 
 # Format Commands
-format: ## lint code
+format: ## format code
 	ruff format
 	ruff check --fix
 
