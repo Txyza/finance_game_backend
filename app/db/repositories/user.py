@@ -18,6 +18,13 @@ class UserRepository:
         await self._session.refresh(user)
         return UserRead.model_validate(user)
 
+    async def create_with_id(self, user_id: uuid.UUID, data: UserCreate) -> UserRead:
+        user = User(id=user_id, **data.model_dump())
+        self._session.add(user)
+        await self._session.flush()
+        await self._session.refresh(user)
+        return UserRead.model_validate(user)
+
     async def get(self, user_id: uuid.UUID) -> UserRead | None:
         instance = await self._session.get(User, user_id)
         if instance is None:
