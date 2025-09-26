@@ -4,7 +4,7 @@ from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
-from app.db.repositories import UserRepository
+from app.repositories import UserRepository
 from app.schemas import UserRead
 
 

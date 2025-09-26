@@ -1,4 +1,4 @@
-from .item import ItemBase, ItemCreate, ItemRead, ItemType, ItemUpdate
+from .item import ItemBase, ItemCreate, ItemRead, ItemType, ItemUpdate, ItemNames
 from .item_user import ItemUserBase, ItemUserCreate, ItemUserRead, ItemUserUpdate
 from .task import TaskBase, TaskCreate, TaskRead, TaskType, TaskUpdate
 from .transaction import (
@@ -18,6 +18,7 @@ __all__ = (
     "ItemRead",
     "ItemType",
     "ItemUpdate",
+    "ItemNames",
     "ItemUserBase",
     "ItemUserCreate",
     "ItemUserRead",

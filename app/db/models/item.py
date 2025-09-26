@@ -1,18 +1,13 @@
-import enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Enum, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
+from app.schemas.item import ItemType
 
 if TYPE_CHECKING:
     from .item_user import ItemUser
-
-
-class ItemType(str, enum.Enum):
-    FINANCE = "finance"
-    PERMANENT = "permanent"
 
 
 class Item(Base):

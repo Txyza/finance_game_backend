@@ -1,25 +1,13 @@
-import enum
-
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
+from app.schemas.task import RewardType, TaskType
 
 if TYPE_CHECKING:
     from .user_task import UserTask
-
-
-class TaskType(str, enum.Enum):
-    DAELY = "daely"
-    WEAKLY = "weakly"
-    QUEST = "quest"
-
-
-class RewardType(str, enum.Enum):
-    MONEY = "money"
-    EXP = "exp"
 
 
 class Task(Base):

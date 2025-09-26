@@ -1,6 +1,17 @@
+from enum import Enum
+
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.db.models.task import RewardType, TaskType
+
+class TaskType(str, Enum):
+    DAELY = "daely"
+    WEAKLY = "weakly"
+    QUEST = "quest"
+
+
+class RewardType(str, Enum):
+    MONEY = "money"
+    EXP = "exp"
 
 
 class TaskBase(BaseModel):

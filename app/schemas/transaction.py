@@ -1,9 +1,14 @@
 import uuid
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.db.models.transaction import TransactionType
+
+class TransactionType(str, Enum):
+    BANK = "bank"
+    EVENT = "event"
+    WORK = "work"
 
 
 class TransactionBase(BaseModel):

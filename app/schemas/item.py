@@ -1,6 +1,20 @@
+from enum import Enum, StrEnum
+
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.db.models.item import ItemType
+
+class ItemType(str, Enum):
+    FINANCE = "finance"
+    PERMANENT = "permanent"
+    DEBET = "debet"
+
+
+class ItemNames(StrEnum):
+    ENERGY_DRINK = "energy_drink"
+    TACTICAL_PLANNER = "tactical_planner"
+    RISK_SHIELD = "risk_shield"
+    SMART_MIR = "smart_mir"
+    SUPREME_MIR = "supreme_mir"
 
 
 class ItemBase(BaseModel):

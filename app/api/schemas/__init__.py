@@ -1,6 +1,6 @@
 from .store import StoreBuyRequest, StoreItem, StoreListResponse
 from .task import TaskListItem, TaskListResponse, TaskRewardRequest
-from .user import UserCreateRequest, UserProfileResponse
+from .user import StarterCardName, UserCreateRequest, UserProfileResponse
 from .work import (
     WorkListItem,
     WorkListResponse,
@@ -16,6 +16,7 @@ __all__ = (
     "TaskListItem",
     "TaskListResponse",
     "TaskRewardRequest",
+    "StarterCardName",
     "UserCreateRequest",
     "UserProfileResponse",
     "WorkListItem",
