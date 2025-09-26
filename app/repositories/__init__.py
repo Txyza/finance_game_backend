@@ -6,6 +6,7 @@ from .transaction import TransactionRepository
 from .user import UserRepository
 from .user_task import UserTaskRepository
 from .work import WorkRepository
+from .work_memory import InMemoryWorkRepository
 
 __all__ = (
     "ItemRepository",
@@ -16,4 +17,5 @@ __all__ = (
     "UserRepository",
     "UserTaskRepository",
     "WorkRepository",
+    "InMemoryWorkRepository",
 )

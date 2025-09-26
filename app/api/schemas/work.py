@@ -14,6 +14,10 @@ class WorkListResponse(BaseModel):
     works: list[WorkListItem]
 
 
+class WorkStartRequest(BaseModel):
+    work_name: str = Field(max_length=2048)
+
+
 class WorkStartResponse(BaseModel):
     transaction_id: uuid.UUID
 

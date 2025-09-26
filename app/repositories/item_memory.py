@@ -59,7 +59,7 @@ class InMemoryItemRepository:
             exclusive=False,
             energy_max_boost=0.0,
             energy_recovery_boost=0.0,
-            energy_shild_boost=15.0,
+            energy_shild_boost=0.15,
             image=None,
         ),
     ]

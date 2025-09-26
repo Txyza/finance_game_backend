@@ -4,6 +4,7 @@ from .user import StarterCardName, UserCreateRequest, UserProfileResponse
 from .work import (
     WorkListItem,
     WorkListResponse,
+    WorkStartRequest,
     WorkStartResponse,
     WorkStopRequest,
     WorkStopResponse,
@@ -21,6 +22,7 @@ __all__ = (
     "UserProfileResponse",
     "WorkListItem",
     "WorkListResponse",
+    "WorkStartRequest",
     "WorkStartResponse",
     "WorkStopRequest",
     "WorkStopResponse",
