@@ -12,7 +12,7 @@ from app.schemas import TaskRead, TaskType, UserTaskCreate
 
 _TASKS_PER_CATEGORY = 3
 _FORCED_TASKS: dict[TaskType, set[str]] = {
-    TaskType.DAELY: {"daily_work_session", "daily_budget_check"},
+    TaskType.DAELY: {"daily_work_session", "daily_login"},
     TaskType.WEAKLY: {"weekly_investor", "weekly_collector"},
     TaskType.QUEST: set(),
 }

@@ -60,7 +60,7 @@ async def list_work(
         required_energy = _calculate_energy_cost(work, inventory_with_items)
         available_booster = min(
             work.max_amount,
-            _calculate_amount_booster(current_user.experience),
+            _calculate_amount_booster(current_user),
         )
         items.append(
             WorkListItem(
@@ -149,12 +149,6 @@ async def stop_work(
 ) -> WorkStopResponse:
     """Complete a work session and grant rewards."""
 
-    if payload.points > 10_000:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Points limit exceeded",
-        )
-
     transaction_repository = TransactionRepository(session)
     work_repository = WorkRepository(session)
     user_item_repository = UserItemRepository(session)
@@ -185,8 +179,8 @@ async def stop_work(
             status_code=status.HTTP_404_NOT_FOUND, detail="Work not found"
         )
 
-    experience_multiplier = _calculate_experience_multiplier(current_user)
-    amount = payload.points * experience_multiplier
+    experience_multiplier = _calculate_amount_booster(current_user)
+    amount = int(min(payload.points, 10000) * experience_multiplier)
 
     now = datetime.now(timezone.utc)
     await transaction_repository.update(
@@ -216,8 +210,8 @@ async def stop_work(
     return WorkStopResponse(amount=amount)
 
 
-def _calculate_experience_multiplier(user: UserRead) -> int:
-    return max(1, user.experience // 1_000 + 1)
+def _calculate_amount_booster(user: UserRead) -> float:
+    return max(1, user.experience / 1_000 + 1)
 
 
 def _calculate_energy_cost(
@@ -231,7 +225,3 @@ def _calculate_energy_cost(
 
     adjusted = int(round(work.base_energy * factor))
     return max(0, adjusted)
-
-
-def _calculate_amount_booster(experience: int) -> int:
-    return max(1, experience // 1_000 + 1)

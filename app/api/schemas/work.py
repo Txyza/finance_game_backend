@@ -7,7 +7,7 @@ class WorkListItem(BaseModel):
     name: str = Field(max_length=2048)
     description: str
     energy: int = Field(ge=0)
-    amount_booster: int = Field(ge=0)
+    amount_booster: float = Field(ge=0)
 
 
 class WorkListResponse(BaseModel):

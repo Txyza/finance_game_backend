@@ -121,7 +121,7 @@ _TASKS_DATA = [
         "description": "Начните хотя бы одну рабочую сессию",
         "type": "daely",
         "reward": 120,
-        "reward_type": "money",
+        "reward_type": "exp",
         "progress_max_points": 1,
     },
     {
@@ -186,7 +186,7 @@ _TASKS_DATA = [
         "description": "Заработайте 5 000 единиц за неделю",
         "type": "weakly",
         "reward": 800,
-        "reward_type": "money",
+        "reward_type": "exp",
         "progress_max_points": 5000,
     },
     {
