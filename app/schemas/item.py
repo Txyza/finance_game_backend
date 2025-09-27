@@ -25,6 +25,7 @@ class ItemBase(BaseModel):
     energy_max_boost: float = 0.0
     energy_recovery_boost: float = 0.0
     energy_shild_boost: float = 0.0
+    duration_seconds: int = Field(default=0, ge=0)
     image: str | None = None
 
 
@@ -40,6 +41,7 @@ class ItemUpdate(BaseModel):
     energy_max_boost: float | None = None
     energy_recovery_boost: float | None = None
     energy_shild_boost: float | None = None
+    duration_seconds: int | None = Field(default=None, ge=0)
     image: str | None = None
 
 

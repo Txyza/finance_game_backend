@@ -1,5 +1,5 @@
 from .item import ItemBase, ItemCreate, ItemRead, ItemType, ItemUpdate, ItemNames
-from .item_user import ItemUserBase, ItemUserCreate, ItemUserRead, ItemUserUpdate
+from .user_item import UserItemBase, UserItemCreate, UserItemRead, UserItemUpdate
 from .task import TaskBase, TaskCreate, TaskRead, TaskType, TaskUpdate, RewardType
 from .transaction import (
     TransactionBase,
@@ -19,10 +19,10 @@ __all__ = (
     "ItemType",
     "ItemUpdate",
     "ItemNames",
-    "ItemUserBase",
-    "ItemUserCreate",
-    "ItemUserRead",
-    "ItemUserUpdate",
+    "UserItemBase",
+    "UserItemCreate",
+    "UserItemRead",
+    "UserItemUpdate",
     "TaskBase",
     "TaskCreate",
     "TaskRead",

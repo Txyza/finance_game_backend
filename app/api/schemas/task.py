@@ -6,7 +6,6 @@ from app.schemas import TaskType, RewardType
 
 
 class TaskListItem(BaseModel):
-    # TASK READ
     user_task_id: uuid.UUID
     name: str
     description: str

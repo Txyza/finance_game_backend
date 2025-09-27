@@ -4,6 +4,7 @@ import uuid
 
 from pydantic import BaseModel, Field
 
+from app.schemas import TaskType
 from app.schemas.item import ItemNames
 
 
@@ -19,6 +20,7 @@ class UserCreateRequest(BaseModel):
 
 class UserProfileResponse(BaseModel):
     id: uuid.UUID
+    name: str
     debet_money: int = Field(ge=0)
     capital: int = Field(ge=0)
     energy: int = Field(ge=0)
@@ -26,3 +28,4 @@ class UserProfileResponse(BaseModel):
     experience: int = Field(ge=0)
     key_rate: Decimal = Field(ge=0)
     inflation: Decimal = Field(ge=0)
+    ready_to_reward_tasks_counts: dict[TaskType, int]

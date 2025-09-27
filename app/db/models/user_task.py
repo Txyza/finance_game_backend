@@ -25,11 +25,13 @@ class UserTask(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
     task_name: Mapped[str] = mapped_column(
-        String(255), ForeignKey("tasks.name"), nullable=False
+        String(255),
+        ForeignKey("tasks.name", ondelete="CASCADE"),
+        nullable=False,
     )
     progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     rewarded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

@@ -23,7 +23,7 @@ class Transaction(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
     instrument_id: Mapped[str | None] = mapped_column(String(2048), nullable=True)
@@ -35,7 +35,11 @@ class Transaction(Base):
         DateTime(timezone=True), nullable=True
     )
     type: Mapped[TransactionType] = mapped_column(
-        Enum(TransactionType, name="transaction_type"),
+        Enum(
+            TransactionType,
+            name="transaction_type",
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+        ),
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)

@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime, timezone
-from typing import Iterable, Tuple
+from typing import Iterable
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import CurrentUser, SessionDep
 from app.api.schemas import (
@@ -13,21 +13,25 @@ from app.api.schemas import (
     WorkStopRequest,
     WorkStopResponse,
 )
+from app.api.utils import (
+    InventoryEntry,
+    apply_task_progress,
+    attach_items,
+    check_tasks,
+    find_primary_debet_item,
+)
 from app.repositories import (
-    InMemoryWorkRepository,
     ItemRepository,
-    ItemUserRepository,
     TransactionRepository,
+    UserItemRepository,
     UserRepository,
+    WorkRepository,
 )
 from app.schemas import (
-    ItemRead,
-    ItemType,
-    ItemUserRead,
-    ItemUserUpdate,
     TransactionCreate,
     TransactionType,
     TransactionUpdate,
+    UserItemUpdate,
     UserRead,
     UserUpdate,
     WorkRead,
@@ -43,13 +47,13 @@ async def list_work(
 ) -> WorkListResponse:
     """Retrieve the list of available work activities."""
 
-    work_repository = InMemoryWorkRepository()
-    item_user_repository = ItemUserRepository(session)
+    work_repository = WorkRepository(session)
+    user_item_repository = UserItemRepository(session)
     item_repository = ItemRepository(session)
 
-    works = await work_repository.list_many()
-    inventory = await item_user_repository.list_by_user(current_user.id)
-    inventory_with_items = await _attach_items(inventory, item_repository)
+    works = await work_repository.list_many(limit=1_000)
+    inventory = await user_item_repository.list_by_user(current_user.id)
+    inventory_with_items = await attach_items(inventory, item_repository)
 
     items: list[WorkListItem] = []
     for work in works:
@@ -80,10 +84,10 @@ async def start_work(
 ) -> WorkStartResponse:
     """Start a work session for the current user."""
 
-    work_repository = InMemoryWorkRepository()
+    work_repository = WorkRepository(session)
     user_repository = UserRepository(session)
     transaction_repository = TransactionRepository(session)
-    item_user_repository = ItemUserRepository(session)
+    user_item_repository = UserItemRepository(session)
     item_repository = ItemRepository(session)
 
     work = await work_repository.get(payload.work_name)
@@ -92,8 +96,8 @@ async def start_work(
             status_code=status.HTTP_404_NOT_FOUND, detail="Work not found"
         )
 
-    inventory = await item_user_repository.list_by_user(current_user.id)
-    inventory_with_items = await _attach_items(inventory, item_repository)
+    inventory = await user_item_repository.list_by_user(current_user.id)
+    inventory_with_items = await attach_items(inventory, item_repository)
 
     energy_cost = _calculate_energy_cost(work, inventory_with_items)
     if current_user.energy < energy_cost:
@@ -102,20 +106,20 @@ async def start_work(
             detail="Not enough energy to start work",
         )
 
-    debit_entry = _find_primary_debit_item(inventory_with_items)
+    debit_entry = find_primary_debet_item(inventory_with_items)
     if debit_entry is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Debit card is required to start work",
         )
 
-    debit_item_user, _ = debit_entry
+    user_item, _ = debit_entry
 
     now = datetime.now(timezone.utc)
     transaction = await transaction_repository.create(
         TransactionCreate(
             user_id=current_user.id,
-            instrument_id=str(debit_item_user.id),
+            instrument_id=str(user_item.id),
             amount=0,
             datetime_start=now,
             datetime_end=None,
@@ -132,7 +136,12 @@ async def start_work(
     return WorkStartResponse(transaction_id=transaction.id)
 
 
-@router.post("/stop", response_model=WorkStopResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/stop",
+    response_model=WorkStopResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(check_tasks({"daily_work_session": 1}).dependency())],
+)
 async def stop_work(
     payload: WorkStopRequest,
     current_user: CurrentUser,
@@ -147,8 +156,8 @@ async def stop_work(
         )
 
     transaction_repository = TransactionRepository(session)
-    work_repository = InMemoryWorkRepository()
-    item_user_repository = ItemUserRepository(session)
+    work_repository = WorkRepository(session)
+    user_item_repository = UserItemRepository(session)
 
     transaction = await transaction_repository.get(payload.transaction_id)
     if transaction is None or transaction.user_id != current_user.id:
@@ -187,16 +196,22 @@ async def stop_work(
 
     if transaction.instrument_id is not None:
         try:
-            debit_item_user_id = uuid.UUID(transaction.instrument_id)
+            user_item_id = uuid.UUID(transaction.instrument_id)
         except ValueError:
-            debit_item_user_id = None
-        if debit_item_user_id is not None:
-            debit_item_user = await item_user_repository.get(debit_item_user_id)
-            if debit_item_user is not None:
-                await item_user_repository.update(
-                    debit_item_user_id,
-                    ItemUserUpdate(amount=debit_item_user.amount + amount),
+            user_item_id = None
+        if user_item_id is not None:
+            user_item = await user_item_repository.get(user_item_id)
+            if user_item is not None:
+                await user_item_repository.update(
+                    user_item_id,
+                    UserItemUpdate(amount=user_item.amount + amount),
                 )
+
+    await apply_task_progress(
+        session,
+        current_user,
+        {"weekly_investor": amount},
+    )
 
     return WorkStopResponse(amount=amount)
 
@@ -207,7 +222,7 @@ def _calculate_experience_multiplier(user: UserRead) -> int:
 
 def _calculate_energy_cost(
     work: WorkRead,
-    inventory: Iterable[Tuple[ItemUserRead, ItemRead]],
+    inventory: Iterable[InventoryEntry],
 ) -> int:
     factor = 1.0
     for _, item in inventory:
@@ -218,28 +233,5 @@ def _calculate_energy_cost(
     return max(0, adjusted)
 
 
-def _find_primary_debit_item(
-    inventory: Iterable[Tuple[ItemUserRead, ItemRead]],
-) -> Tuple[ItemUserRead, ItemRead] | None:
-    for entry in inventory:
-        _, item = entry
-        if item.type == ItemType.DEBET:
-            return entry
-    return None
-
-
 def _calculate_amount_booster(experience: int) -> int:
     return max(1, experience // 1_000 + 1)
-
-
-async def _attach_items(
-    user_items: Iterable[ItemUserRead],
-    item_repository: ItemRepository,
-) -> list[Tuple[ItemUserRead, ItemRead]]:
-    results: list[Tuple[ItemUserRead, ItemRead]] = []
-    for user_item in user_items:
-        item = await item_repository.get(user_item.item_name)
-        if item is None:
-            continue
-        results.append((user_item, item))
-    return results

@@ -9,6 +9,7 @@ class TransactionType(str, Enum):
     BANK = "bank"
     EVENT = "event"
     WORK = "work"
+    TASK = "task"
 
 
 class TransactionBase(BaseModel):

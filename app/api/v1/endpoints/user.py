@@ -7,17 +7,20 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.auth.dependencies import get_uuid_by_user_agent
 from app.api.dependencies import CurrentUser, SessionDep
 from app.api.schemas import UserCreateRequest, UserProfileResponse
+from app.api.utils import (
+    assign_initial_tasks,
+    fetch_user_tasks_with_definitions,
+    group_ready_to_reward_counts,
+)
 from app.repositories import (
-    InMemoryItemRepository,
     ItemRepository,
-    ItemUserRepository,
+    UserItemRepository,
     UserRepository,
 )
 from app.schemas import (
-    ItemCreate,
     ItemType,
-    ItemUserCreate,
     UserCreate,
+    UserItemCreate,
     UserRead,
 )
 
@@ -38,21 +41,15 @@ async def create_user(
 
     user_repository = UserRepository(session)
     item_repository = ItemRepository(session)
-    item_user_repository = ItemUserRepository(session)
-    catalog_repository = InMemoryItemRepository()
-
+    user_item_repository = UserItemRepository(session)
     starter_card_name = payload.starter_card.value
 
-    catalog_item = await catalog_repository.get(starter_card_name)
-    if catalog_item is None or catalog_item.type != ItemType.DEBET:
+    stored_item = await item_repository.get(starter_card_name)
+    if stored_item is None or stored_item.type != ItemType.DEBET:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid starter card",
         )
-
-    stored_item = await item_repository.get(starter_card_name)
-    if stored_item is None:
-        await item_repository.create(ItemCreate(**catalog_item.model_dump()))
 
     existing_user = await user_repository.get(user_id)
     if existing_user is not None:
@@ -62,13 +59,15 @@ async def create_user(
         user_id, UserCreate(name=payload.name, energy=100)
     )
 
-    await item_user_repository.create(
-        ItemUserCreate(
+    await user_item_repository.create(
+        UserItemCreate(
             user_id=user.id,
-            item_name=starter_card_name,
+            item_name=stored_item.name,
             amount=10_000,
         )
     )
+
+    await assign_initial_tasks(session, user.id)
 
     return await _build_user_profile(user, session)
 
@@ -92,10 +91,10 @@ async def _build_user_profile(
     session: SessionDep,
 ) -> UserProfileResponse:
     item_repository = ItemRepository(session)
-    item_user_repository = ItemUserRepository(session)
+    user_item_repository = UserItemRepository(session)
 
     debet_total = 0
-    user_items = await item_user_repository.list_by_user(user.id)
+    user_items = await user_item_repository.list_by_user(user.id)
     for user_item in user_items:
         item = await item_repository.get(user_item.item_name)
         if item is None:
@@ -103,8 +102,12 @@ async def _build_user_profile(
         if item.type == ItemType.DEBET:
             debet_total += user_item.amount
 
+    user_tasks, task_map = await fetch_user_tasks_with_definitions(session, user.id)
+    ready_counts = group_ready_to_reward_counts(user_tasks, task_map)
+
     return UserProfileResponse(
         id=user.id,
+        name=user.name,
         debet_money=debet_total,
         capital=debet_total,
         energy=user.energy,
@@ -112,4 +115,5 @@ async def _build_user_profile(
         experience=user.experience,
         key_rate=Decimal("0"),
         inflation=Decimal("0"),
+        ready_to_reward_tasks_counts=ready_counts,
     )

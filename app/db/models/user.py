@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 
 if TYPE_CHECKING:
-    from .item_user import ItemUser
+    from .user_item import UserItem
     from .transaction import Transaction
     from .user_task import UserTask
 
@@ -30,8 +30,8 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    items: Mapped[list["ItemUser"]] = relationship(
-        "ItemUser",
+    items: Mapped[list["UserItem"]] = relationship(
+        "UserItem",
         back_populates="user",
         cascade="all, delete-orphan",
     )

@@ -16,11 +16,21 @@ class Task(Base):
     name: Mapped[str] = mapped_column(String(255), primary_key=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     type: Mapped[TaskType] = mapped_column(
-        Enum(TaskType, name="task_type"), nullable=False
+        Enum(
+            TaskType,
+            name="task_type",
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+        ),
+        nullable=False,
     )
     reward: Mapped[int] = mapped_column(Integer, nullable=False)
     reward_type: Mapped[RewardType] = mapped_column(
-        Enum(RewardType, name="reward_type"), nullable=False
+        Enum(
+            RewardType,
+            name="reward_type",
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+        ),
+        nullable=False,
     )
     progress_max_points: Mapped[int] = mapped_column(Integer, nullable=False)
 

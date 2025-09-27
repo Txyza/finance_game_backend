@@ -66,6 +66,28 @@ class UserTaskRepository:
         await self._session.flush()
         return True
 
+    async def increment_progress(
+        self,
+        user_id: uuid.UUID,
+        task_name: str,
+        amount: int,
+    ) -> bool:
+        if amount <= 0:
+            return False
+
+        result = await self._session.execute(
+            select(UserTask)
+            .where(UserTask.user_id == user_id, UserTask.task_name == task_name)
+            .limit(1)
+        )
+        instance = result.scalar_one_or_none()
+        if instance is None:
+            return False
+
+        instance.progress += amount
+        await self._session.flush()
+        return True
+
     @staticmethod
     def _map_many(instances: Iterable[UserTask]) -> list[UserTaskRead]:
         return [UserTaskRead.model_validate(obj) for obj in instances]
