@@ -2,14 +2,14 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.api.dependencies import CurrentUser, SessionDep
 from app.api.schemas import TaskListResponse, TaskRewardRequest
+from app.schemas import TaskType
 
 router = APIRouter(prefix="/task", tags=["task"])
 
 
 @router.get("/list", response_model=TaskListResponse, status_code=status.HTTP_200_OK)
 async def list_tasks(
-    _current_user: CurrentUser,
-    _session: SessionDep,
+    _current_user: CurrentUser, _session: SessionDep, _task_type: TaskType
 ) -> TaskListResponse:
     """Return the list of tasks paired with user progress."""
     raise HTTPException(
