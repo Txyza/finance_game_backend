@@ -58,7 +58,9 @@ async def create_user(
     if existing_user is not None:
         return await _build_user_profile(existing_user, session)
 
-    user = await user_repository.create_with_id(user_id, UserCreate(energy=100))
+    user = await user_repository.create_with_id(
+        user_id, UserCreate(name=payload.name, energy=100)
+    )
 
     await item_user_repository.create(
         ItemUserCreate(

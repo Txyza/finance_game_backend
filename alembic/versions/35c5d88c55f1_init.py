@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 0675c7511f6d
+Revision ID: 35c5d88c55f1
 Revises:
-Create Date: 2025-09-23 23:44:59.441231
+Create Date: 2025-09-27 13:44:29.397123
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "0675c7511f6d"
+revision: str = "35c5d88c55f1"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,7 +27,9 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column("price", sa.Integer(), nullable=False),
         sa.Column(
-            "type", sa.Enum("FINANCE", "PERMANENT", name="item_type"), nullable=False
+            "type",
+            sa.Enum("FINANCE", "PERMANENT", "DEBET", name="item_type"),
+            nullable=False,
         ),
         sa.Column("exclusive", sa.Boolean(), nullable=False),
         sa.Column("energy_max_boost", sa.Float(), nullable=False),
@@ -55,6 +57,7 @@ def upgrade() -> None:
     op.create_table(
         "users",
         sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("name", sa.Text(), nullable=False),
         sa.Column("energy", sa.SmallInteger(), nullable=False),
         sa.Column("experience", sa.BigInteger(), nullable=False),
         sa.PrimaryKeyConstraint("id"),

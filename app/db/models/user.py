@@ -1,7 +1,7 @@
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, SmallInteger
+from sqlalchemy import BigInteger, SmallInteger, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,6 +21,7 @@ class User(Base):
         primary_key=True,
         default=uuid.uuid4,
     )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
     energy: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
     experience: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
 

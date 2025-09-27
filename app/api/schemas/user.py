@@ -14,6 +14,7 @@ class StarterCardName(StrEnum):
 
 class UserCreateRequest(BaseModel):
     starter_card: StarterCardName
+    name: str = Field(min_length=3)
 
 
 class UserProfileResponse(BaseModel):

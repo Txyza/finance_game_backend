@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class UserBase(BaseModel):
+    name: str = Field(min_length=3)
     energy: int = Field(default=0, ge=0)
     experience: int = Field(default=0, ge=0)
 
