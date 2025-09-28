@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Query, status
@@ -84,28 +83,28 @@ async def transaction_summary(
 
     for transaction in transactions:
         target = income if transaction.amount >= 0 else expense
-        amount = Decimal(abs(transaction.amount))
+        amount = transaction.amount
 
         match transaction.type:
             case TransactionType.WORK:
                 try:
                     work_name = WorkNames(transaction.name)
                 except ValueError:
-                    target.other.setdefault(transaction.name, Decimal(0))
+                    target.other.setdefault(transaction.name, 0)
                     target.other[transaction.name] += amount
                 else:
-                    target.work.setdefault(work_name, Decimal(0))
+                    target.work.setdefault(work_name, 0)
                     target.work[work_name] += amount
             case TransactionType.BANK:
                 instrument_key = transaction.instrument_id
                 if instrument_key is None:
-                    target.other.setdefault(transaction.name, Decimal(0))
+                    target.other.setdefault(transaction.name, 0)
                     target.other[transaction.name] += amount
                     continue
 
                 pair = user_item_lookup.get(instrument_key)
                 if pair is None:
-                    target.other.setdefault(transaction.name, Decimal(0))
+                    target.other.setdefault(transaction.name, 0)
                     target.other[transaction.name] += amount
                     continue
 
@@ -119,18 +118,18 @@ async def transaction_summary(
                 try:
                     instrument = ItemNames(item.name)
                 except ValueError:
-                    target.other.setdefault(item.name, Decimal(0))
+                    target.other.setdefault(item.name, 0)
                     target.other[item.name] += amount
                     continue
 
                 target.bank.setdefault(bank_type, {})
-                target.bank[bank_type].setdefault(instrument, Decimal(0))
+                target.bank[bank_type].setdefault(instrument, 0)
                 target.bank[bank_type][instrument] += amount
             case TransactionType.TASK:
-                target.task.setdefault(transaction.name, Decimal(0))
+                target.task.setdefault(transaction.name, 0)
                 target.task[transaction.name] += amount
             case _:
-                target.other.setdefault(transaction.name, Decimal(0))
+                target.other.setdefault(transaction.name, 0)
                 target.other[transaction.name] += amount
 
     return TransactionSummaryResponse(

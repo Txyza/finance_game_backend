@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -16,10 +15,10 @@ class TransactionListResponse(BaseModel):
 
 
 class TransactionSummaryCategory(BaseModel):
-    work: dict[WorkNames, Decimal] = Field(default_factory=dict)
-    bank: dict[ItemType, dict[ItemNames, Decimal]] = Field(default_factory=dict)
-    task: dict[str, Decimal] = Field(default_factory=dict)
-    other: dict[str, Decimal] = Field(default_factory=dict)
+    work: dict[WorkNames, int] = Field(default_factory=dict)
+    bank: dict[ItemType, dict[ItemNames, int]] = Field(default_factory=dict)
+    task: dict[str, int] = Field(default_factory=dict)
+    other: dict[str, int] = Field(default_factory=dict)
 
 
 class TransactionSummaryResponse(BaseModel):
