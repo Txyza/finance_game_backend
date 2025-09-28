@@ -15,16 +15,17 @@ from app.api.schemas import (
 )
 from app.api.utils import (
     InventoryEntry,
+    NotEnoughEnergyError,
     apply_task_progress,
     attach_items,
     check_tasks,
     find_primary_debet_item,
+    spend_energy,
 )
 from app.repositories import (
     ItemRepository,
     TransactionRepository,
     UserItemRepository,
-    UserRepository,
     WorkRepository,
 )
 from app.schemas import (
@@ -33,7 +34,6 @@ from app.schemas import (
     TransactionUpdate,
     UserItemUpdate,
     UserRead,
-    UserUpdate,
     WorkRead,
 )
 
@@ -85,7 +85,6 @@ async def start_work(
     """Start a work session for the current user."""
 
     work_repository = WorkRepository(session)
-    user_repository = UserRepository(session)
     transaction_repository = TransactionRepository(session)
     user_item_repository = UserItemRepository(session)
     item_repository = ItemRepository(session)
@@ -100,12 +99,6 @@ async def start_work(
     inventory_with_items = await attach_items(inventory, item_repository)
 
     energy_cost = _calculate_energy_cost(work, inventory_with_items)
-    if current_user.energy < energy_cost:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Not enough energy to start work",
-        )
-
     debit_entry = find_primary_debet_item(inventory_with_items)
     if debit_entry is None:
         raise HTTPException(
@@ -114,6 +107,18 @@ async def start_work(
         )
 
     user_item, _ = debit_entry
+
+    try:
+        await spend_energy(
+            session,
+            user_id=current_user.id,
+            amount=energy_cost,
+        )
+    except NotEnoughEnergyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
 
     now = datetime.now(timezone.utc)
     transaction = await transaction_repository.create(
@@ -126,11 +131,6 @@ async def start_work(
             type=TransactionType.WORK,
             name=work.name,
         )
-    )
-
-    await user_repository.update(
-        current_user.id,
-        UserUpdate(energy=current_user.energy - energy_cost),
     )
 
     return WorkStartResponse(transaction_id=transaction.id)

@@ -2,7 +2,7 @@
 fastapi==0.117.1
 uvicorn[standard]
 pydantic==2.11.9
-pydantic-settings==2.10.1
+pydantic-settings==2.11.0
 python-multipart==0.0.20
 
 # Database
@@ -11,8 +11,10 @@ asyncpg==0.30.0
 alembic==1.16.5
 greenlet==3.2.4
 
-# Redis
-redis==6.4.0
+# Redis & Celery
+redis==5.2.1
+celery[redis]==5.5.3
+celery-types==0.23.0
 
 # Security & Auth
 python-jose[cryptography]==3.5.0
