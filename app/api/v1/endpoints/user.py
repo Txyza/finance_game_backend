@@ -19,12 +19,14 @@ from app.repositories import (
     ItemRepository,
     UserItemRepository,
     UserRepository,
+    WorldSettingRepository,
 )
 from app.schemas import (
     ItemType,
     UserCreate,
     UserItemCreate,
     UserRead,
+    WorldSettingName,
 )
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -99,6 +101,7 @@ async def _build_user_profile(
 ) -> UserProfileResponse:
     item_repository = ItemRepository(session)
     user_item_repository = UserItemRepository(session)
+    world_setting_repository = WorldSettingRepository(session)
 
     user_items = await user_item_repository.list_by_user(user.id)
     inventory_with_items = await attach_items(user_items, item_repository)
@@ -113,6 +116,17 @@ async def _build_user_profile(
     user_tasks, task_map = await fetch_user_tasks_with_definitions(session, user.id)
     ready_counts = group_ready_to_reward_counts(user_tasks, task_map)
 
+    key_rate = Decimal("0")
+    inflation = Decimal("0")
+
+    key_rate_setting = await world_setting_repository.get(WorldSettingName.KEY_RATE)
+    if key_rate_setting is not None:
+        key_rate = key_rate_setting.value
+
+    inflation_setting = await world_setting_repository.get(WorldSettingName.INFLATION)
+    if inflation_setting is not None:
+        inflation = inflation_setting.value
+
     return UserProfileResponse(
         id=user.id,
         name=user.name,
@@ -121,7 +135,7 @@ async def _build_user_profile(
         energy=user.energy,
         max_energy=max_energy,
         experience=user.experience,
-        key_rate=Decimal("0"),
-        inflation=Decimal("0"),
+        key_rate=key_rate,
+        inflation=inflation,
         ready_to_reward_tasks_counts=ready_counts,
     )

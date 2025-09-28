@@ -5,6 +5,7 @@ from .user import User
 from .user_item import UserItem
 from .user_task import UserTask
 from .work import Work
+from .world_setting import WorldSetting
 from app.schemas.item import ItemType
 from app.schemas.task import RewardType, TaskType
 from app.schemas.transaction import TransactionType
@@ -21,4 +22,5 @@ __all__ = (
     "UserItem",
     "UserTask",
     "Work",
+    "WorldSetting",
 )
