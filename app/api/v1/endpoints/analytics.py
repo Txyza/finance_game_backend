@@ -82,6 +82,8 @@ async def transaction_summary(
     expense = TransactionSummaryCategory()
 
     for transaction in transactions:
+        if transaction.amount == 0:
+            continue
         target = income if transaction.amount >= 0 else expense
         amount = transaction.amount
 

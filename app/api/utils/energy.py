@@ -46,7 +46,7 @@ async def spend_energy(
         raise RuntimeError("Failed to update user energy")
 
     key = f"{_ACTIVITY_KEY_PREFIX}{user_id}"
-    await redis_client.setex(key, _ACTIVITY_TTL_SECONDS, "active")
+    await redis_client.setex(key, int(_ACTIVITY_TTL_SECONDS), "active")
 
     return updated_user
 
