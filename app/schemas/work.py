@@ -1,4 +1,11 @@
+from enum import StrEnum
+
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class WorkNames(StrEnum):
+    GAME_2048 = "2048"
+    MEMORY = "memory"
 
 
 class WorkBase(BaseModel):

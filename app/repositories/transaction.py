@@ -41,19 +41,23 @@ class TransactionRepository:
         transactions = result.scalars().all()
         return self._map_many(transactions)
 
-    async def list_by_user(
+    async def list_by_user_cursor(
         self,
         user_id: uuid.UUID,
         *,
-        offset: int = 0,
-        limit: int = 100,
+        cursor: uuid.UUID | None = None,
+        limit: int = 50,
     ) -> list[TransactionRead]:
-        result = await self._session.execute(
+        stmt = (
             select(Transaction)
             .where(Transaction.user_id == user_id)
-            .offset(offset)
+            .order_by(Transaction.id.desc())
             .limit(limit)
         )
+        if cursor is not None:
+            stmt = stmt.where(Transaction.id < cursor)
+
+        result = await self._session.execute(stmt)
         return self._map_many(result.scalars().all())
 
     async def update(
