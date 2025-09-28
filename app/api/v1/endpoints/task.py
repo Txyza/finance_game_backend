@@ -85,7 +85,7 @@ async def get_task_reward(
             status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
         )
 
-    if user_task.progress != task.progress_max_points:
+    if user_task.progress >= task.progress_max_points:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Task is not completed",
