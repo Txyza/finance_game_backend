@@ -9,9 +9,12 @@ from app.api.dependencies import CurrentUser, SessionDep
 from app.api.schemas import UserCreateRequest, UserProfileResponse
 from app.api.utils import (
     assign_initial_tasks,
+    calculate_max_energy,
     fetch_user_tasks_with_definitions,
     group_ready_to_reward_counts,
+    attach_items,
 )
+from app.core.constants import DEFAULT_STARTER_CARD_AMOUNT, EnergyDefaults
 from app.repositories import (
     ItemRepository,
     UserItemRepository,
@@ -56,14 +59,18 @@ async def create_user(
         return await _build_user_profile(existing_user, session)
 
     user = await user_repository.create_with_id(
-        user_id, UserCreate(name=payload.name, energy=100)
+        user_id,
+        UserCreate(
+            name=payload.name,
+            energy=int(EnergyDefaults.MAX_ENERGY),
+        ),
     )
 
     await user_item_repository.create(
         UserItemCreate(
             user_id=user.id,
             item_name=stored_item.name,
-            amount=10_000,
+            amount=DEFAULT_STARTER_CARD_AMOUNT,
         )
     )
 
@@ -93,14 +100,15 @@ async def _build_user_profile(
     item_repository = ItemRepository(session)
     user_item_repository = UserItemRepository(session)
 
-    debet_total = 0
     user_items = await user_item_repository.list_by_user(user.id)
-    for user_item in user_items:
-        item = await item_repository.get(user_item.item_name)
-        if item is None:
-            continue
+    inventory_with_items = await attach_items(user_items, item_repository)
+
+    debet_total = 0
+    for user_item, item in inventory_with_items:
         if item.type == ItemType.DEBET:
             debet_total += user_item.amount
+
+    max_energy = calculate_max_energy(user, inventory_with_items)
 
     user_tasks, task_map = await fetch_user_tasks_with_definitions(session, user.id)
     ready_counts = group_ready_to_reward_counts(user_tasks, task_map)
@@ -111,7 +119,7 @@ async def _build_user_profile(
         debet_money=debet_total,
         capital=debet_total,
         energy=user.energy,
-        max_energy=user.energy,
+        max_energy=max_energy,
         experience=user.experience,
         key_rate=Decimal("0"),
         inflation=Decimal("0"),

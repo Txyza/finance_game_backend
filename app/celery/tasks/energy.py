@@ -5,15 +5,20 @@ import logging
 from typing import Final
 
 from app.celery import celery_app
+from app.core.constants import (
+    EnergyDefaults,
+    USER_ACTIVITY_KEY_PREFIX,
+)
 from app.core.redis import redis_client
 from app.db.database import async_session_maker
-from app.repositories import UserRepository
+from app.repositories import ItemRepository, UserItemRepository, UserRepository
 from app.schemas import UserUpdate
+from app.api.utils import attach_items, calculate_max_energy
 
 logger = logging.getLogger(__name__)
 
-_ACTIVITY_KEY_PREFIX: Final[str] = "user:activity:"
-_RECOVERY_AMOUNT: Final[int] = 10
+_ACTIVITY_KEY_PREFIX: Final[str] = f"{USER_ACTIVITY_KEY_PREFIX}:"
+_RECOVERY_AMOUNT: Final[int] = EnergyDefaults.RECOVERY_PER_INTERVAL
 _BATCH_SIZE: Final[int] = 200
 
 
@@ -29,6 +34,8 @@ async def _recover_inactive_users() -> int:
 
     async with async_session_maker() as session:
         user_repository = UserRepository(session)
+        user_item_repository = UserItemRepository(session)
+        item_repository = ItemRepository(session)
 
         offset = 0
         while True:
@@ -41,9 +48,16 @@ async def _recover_inactive_users() -> int:
                 if await redis_client.exists(key):
                     continue
 
+                user_items = await user_item_repository.list_by_user(user.id)
+                inventory_with_items = await attach_items(user_items, item_repository)
+                max_energy = calculate_max_energy(user, inventory_with_items)
+                if user.energy >= max_energy:
+                    continue
+
+                new_energy = min(user.energy + _RECOVERY_AMOUNT, max_energy)
                 await user_repository.update(
                     user.id,
-                    UserUpdate(energy=user.energy + _RECOVERY_AMOUNT),
+                    UserUpdate(energy=new_energy),
                 )
                 updated += 1
 

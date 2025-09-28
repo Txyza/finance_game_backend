@@ -1,6 +1,6 @@
 """Helper utilities for API layer."""
 
-from .energy import NotEnoughEnergyError, spend_energy
+from .energy import NotEnoughEnergyError, calculate_max_energy, spend_energy
 from .items import InventoryEntry, attach_items, find_primary_debet_item
 from .task_assignment import assign_initial_tasks
 from .task_list import build_task_list
@@ -14,6 +14,7 @@ __all__ = (
     "attach_items",
     "apply_task_progress",
     "assign_initial_tasks",
+    "calculate_max_energy",
     "build_task_list",
     "check_tasks",
     "fetch_user_tasks_with_definitions",

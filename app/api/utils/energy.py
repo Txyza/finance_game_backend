@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-from typing import Final
+from typing import Final, Iterable
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.utils.items import InventoryEntry
+from app.core.constants import EnergyDefaults, USER_ACTIVITY_KEY_PREFIX
 from app.core.redis import redis_client
 from app.repositories import UserRepository
 from app.schemas import UserRead, UserUpdate
 
-_ACTIVITY_KEY_PREFIX: Final[str] = "user:activity:"
-_ACTIVITY_TTL_SECONDS: Final[int] = 3600
+_ACTIVITY_KEY_PREFIX: Final[str] = f"{USER_ACTIVITY_KEY_PREFIX}:"
+_ACTIVITY_TTL_SECONDS: Final[int] = EnergyDefaults.INACTIVITY_THRESHOLD_SECONDS
 
 
 class NotEnoughEnergyError(RuntimeError):
@@ -47,3 +49,23 @@ async def spend_energy(
     await redis_client.setex(key, _ACTIVITY_TTL_SECONDS, "active")
 
     return updated_user
+
+
+def calculate_max_energy(
+    user: UserRead,
+    inventory_with_items: Iterable[InventoryEntry],
+) -> int:
+    """Compute the maximum energy considering boosters."""
+
+    energy_boost = 0.0
+    for user_item, item in inventory_with_items:
+        boost = item.energy_max_boost
+        if boost <= 0:
+            continue
+        if item.exclusive:
+            energy_boost += boost
+        else:
+            energy_boost += boost * user_item.amount
+
+    base_cap = int(EnergyDefaults.MAX_ENERGY + energy_boost)
+    return max(base_cap, user.energy)
