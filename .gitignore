@@ -205,6 +205,8 @@ logs/
 # !alembic/versions/.gitkeep
 
 # Claude tasks
+.gitignore
+/tests
 /tasks/
 .claude
 *AGENTS.md

@@ -219,9 +219,17 @@ def _calculate_energy_cost(
     inventory: Iterable[InventoryEntry],
 ) -> int:
     factor = 1.0
-    for _, item in inventory:
-        boost = max(0.0, min(item.energy_shild_boost, 1.0))
-        factor *= 1.0 - boost
+    for user_item, item in inventory:
+        boost_percent = max(0.0, min(item.energy_shild_boost, 100.0))
+        if boost_percent <= 0:
+            continue
+
+        count = 1 if item.exclusive else user_item.amount
+        if count <= 0:
+            continue
+
+        single_factor = 1.0 - boost_percent / 100.0
+        factor *= single_factor**count
 
     adjusted = int(round(work.base_energy * factor))
     return max(0, adjusted)

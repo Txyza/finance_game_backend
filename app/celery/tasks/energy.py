@@ -5,20 +5,20 @@ import logging
 from typing import Final
 
 from app.celery import celery_app
-from app.core.constants import (
-    EnergyDefaults,
-    USER_ACTIVITY_KEY_PREFIX,
-)
+from app.core.constants import USER_ACTIVITY_KEY_PREFIX
 from app.core.redis import redis_client
 from app.db.database import async_session_maker
 from app.repositories import ItemRepository, UserItemRepository, UserRepository
 from app.schemas import UserUpdate
-from app.api.utils import attach_items, calculate_max_energy
+from app.api.utils import (
+    attach_items,
+    calculate_max_energy,
+    calculate_recovery_amount,
+)
 
 logger = logging.getLogger(__name__)
 
 _ACTIVITY_KEY_PREFIX: Final[str] = f"{USER_ACTIVITY_KEY_PREFIX}:"
-_RECOVERY_AMOUNT: Final[int] = EnergyDefaults.RECOVERY_PER_INTERVAL
 _BATCH_SIZE: Final[int] = 200
 
 
@@ -54,7 +54,8 @@ async def _recover_inactive_users() -> int:
                 if user.energy >= max_energy:
                     continue
 
-                new_energy = min(user.energy + _RECOVERY_AMOUNT, max_energy)
+                recovery_amount = calculate_recovery_amount(inventory_with_items)
+                new_energy = min(user.energy + recovery_amount, max_energy)
                 await user_repository.update(
                     user.id,
                     UserUpdate(energy=new_energy),

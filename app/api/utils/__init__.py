@@ -1,7 +1,17 @@
 """Helper utilities for API layer."""
 
-from .energy import NotEnoughEnergyError, calculate_max_energy, spend_energy
-from .items import InventoryEntry, attach_items, find_primary_debet_item
+from .energy import (
+    NotEnoughEnergyError,
+    calculate_max_energy,
+    calculate_recovery_amount,
+    spend_energy,
+)
+from .items import (
+    InventoryEntry,
+    attach_items,
+    find_primary_debet_item,
+    is_instant_item,
+)
 from .task_assignment import assign_initial_tasks
 from .task_list import build_task_list
 from .task_progress import (
@@ -14,6 +24,7 @@ __all__ = (
     "attach_items",
     "apply_task_progress",
     "assign_initial_tasks",
+    "calculate_recovery_amount",
     "calculate_max_energy",
     "build_task_list",
     "check_tasks",
@@ -21,6 +32,7 @@ __all__ = (
     "group_ready_to_reward_counts",
     "InventoryEntry",
     "find_primary_debet_item",
+    "is_instant_item",
     "NotEnoughEnergyError",
     "spend_energy",
 )

@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("price", sa.Integer(), nullable=False),
         sa.Column(
             "type",
-            sa.Enum("finance", "permanent", "debet", name="item_type"),
+            sa.Enum("finance", "permanent", "debet", "rent", name="item_type"),
             nullable=False,
         ),
         sa.Column(

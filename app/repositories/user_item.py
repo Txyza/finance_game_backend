@@ -1,7 +1,8 @@
 import uuid
+from datetime import datetime, timezone
 from typing import Iterable
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import UserItem
@@ -32,6 +33,9 @@ class UserItemRepository:
         offset: int = 0,
         limit: int = 100,
     ) -> list[UserItemRead]:
+        now = datetime.now(timezone.utc)
+        await self._delete_expired_for_user(user_id, now)
+
         result = await self._session.execute(
             select(UserItem)
             .where(UserItem.user_id == user_id)
@@ -66,6 +70,44 @@ class UserItemRepository:
         await self._session.flush()
         return True
 
+    async def delete_expired(
+        self,
+        *,
+        before: datetime,
+        limit: int = 1_000,
+    ) -> int:
+        """Delete expired user items up to the provided limit."""
+
+        stmt = (
+            select(UserItem.id)
+            .where(UserItem.expaired_at.is_not(None))
+            .where(UserItem.expaired_at <= before)
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        ids = result.scalars().all()
+        if not ids:
+            return 0
+
+        await self._session.execute(delete(UserItem).where(UserItem.id.in_(ids)))
+        await self._session.flush()
+        return len(ids)
+
     @staticmethod
     def _map_many(instances: Iterable[UserItem]) -> list[UserItemRead]:
         return [UserItemRead.model_validate(obj) for obj in instances]
+
+    async def _delete_expired_for_user(self, user_id: uuid.UUID, now: datetime) -> None:
+        stmt = (
+            select(UserItem.id)
+            .where(UserItem.user_id == user_id)
+            .where(UserItem.expaired_at.is_not(None))
+            .where(UserItem.expaired_at <= now)
+        )
+        result = await self._session.execute(stmt)
+        ids = result.scalars().all()
+        if not ids:
+            return
+
+        await self._session.execute(delete(UserItem).where(UserItem.id.in_(ids)))
+        await self._session.flush()

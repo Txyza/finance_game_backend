@@ -23,7 +23,7 @@ depends_on: Union[str, Sequence[str], None] = None
 _ITEMS_DATA = [
     {
         "name": "smart_mir",
-        "description": "Умная дебетовая карта Мир",
+        "description": "Умная карта Мир: базовая дебетовая карта",
         "price": 0,
         "type": "debet",
         "exclusive": True,
@@ -35,7 +35,7 @@ _ITEMS_DATA = [
     },
     {
         "name": "supreme_mir",
-        "description": "Премиальная карта Mir Supreme",
+        "description": "Премиальная карта Mir Supreme: расширенный доступ к финансам",
         "price": 0,
         "type": "debet",
         "exclusive": True,
@@ -46,40 +46,64 @@ _ITEMS_DATA = [
         "duration_seconds": 2_147_483_647,
     },
     {
-        "name": "energy_drink",
-        "description": "Энергетический напиток для быстрого восстановления сил",
+        "name": "Энергетический шот",
+        "description": "Энергетический шот мгновенно восстанавливает 50 единиц энергии",
         "price": 150,
         "type": "finance",
         "exclusive": False,
         "energy_max_boost": 0.0,
-        "energy_recovery_boost": 5.0,
+        "energy_recovery_boost": 50.0,
         "energy_shild_boost": 0.0,
         "image": None,
-        "duration_seconds": 3600,
+        "duration_seconds": 0,
     },
     {
-        "name": "tactical_planner",
-        "description": "Тактический планировщик увеличивает максимум энергии",
+        "name": "Чип расширения батареи",
+        "description": "Чип расширения батареи увеличивает максимум энергии на 20 единиц на 24 часа",
         "price": 1200,
-        "type": "permanent",
-        "exclusive": True,
-        "energy_max_boost": 10.0,
+        "type": "finance",
+        "exclusive": False,
+        "energy_max_boost": 20.0,
         "energy_recovery_boost": 0.0,
         "energy_shild_boost": 0.0,
         "image": None,
-        "duration_seconds": 3600,
+        "duration_seconds": 86_400,
     },
     {
-        "name": "risk_shield",
-        "description": "Щит от рисков снижает потери энергии после событий",
-        "price": 800,
+        "name": "Биостимулятор восстановления",
+        "description": "Биостимулятор ускоряет восстановление энергии +10 ед./час на 6 часов",
+        "price": 900,
         "type": "finance",
         "exclusive": False,
         "energy_max_boost": 0.0,
-        "energy_recovery_boost": 0.0,
-        "energy_shild_boost": 0.15,
+        "energy_recovery_boost": 10.0,
+        "energy_shild_boost": 0.0,
         "image": None,
-        "duration_seconds": 3600,
+        "duration_seconds": 21_600,
+    },
+    {
+        "name": "Эмиттер защиты",
+        "description": "Эмиттер защиты снижает потери энергии на 20% на 12 часов",
+        "price": 800,
+        "type": "finance",
+        "exclusive": True,
+        "energy_max_boost": 0.0,
+        "energy_recovery_boost": 0.0,
+        "energy_shild_boost": 0.2,
+        "image": None,
+        "duration_seconds": 43_200,
+    },
+    {
+        "name": "Аренда квартиры",
+        "description": "Аренда комфортной квартиры на 3 дня",
+        "price": 1500,
+        "type": "rent",
+        "exclusive": True,
+        "energy_max_boost": 0.0,
+        "energy_recovery_boost": 0.0,
+        "energy_shild_boost": 0.0,
+        "image": None,
+        "duration_seconds": 259_200,
     },
 ]
 
@@ -321,7 +345,7 @@ _TASKS_DATA = [
 ]
 
 _ITEM_TYPE = postgresql.ENUM(
-    "finance", "permanent", "debet", name="item_type", create_type=False
+    "finance", "permanent", "debet", "rent", name="item_type", create_type=False
 )
 _TASK_TYPE = postgresql.ENUM(
     "daely", "weakly", "quest", name="task_type", create_type=False

@@ -34,6 +34,11 @@ celery_app.conf.update(
             "schedule": timedelta(minutes=20),
             "options": {"queue": "maintenance"},
         },
+        "cleanup-expired-user-items": {
+            "task": "app.celery.tasks.inventory.cleanup_expired_user_items",
+            "schedule": timedelta(hours=1),
+            "options": {"queue": "maintenance"},
+        },
     },
 )
 

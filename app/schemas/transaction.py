@@ -14,7 +14,7 @@ class TransactionType(str, Enum):
 
 class TransactionBase(BaseModel):
     instrument_id: str | None = Field(default=None, max_length=2048)
-    amount: int = Field(ge=0)
+    amount: int
     datetime_start: datetime
     datetime_end: datetime | None = None
     type: TransactionType
@@ -27,7 +27,7 @@ class TransactionCreate(TransactionBase):
 
 class TransactionUpdate(BaseModel):
     instrument_id: str | None = Field(default=None, max_length=2048)
-    amount: int | None = Field(default=None, ge=0)
+    amount: int | None = Field(default=None)
     datetime_start: datetime | None = None
     datetime_end: datetime | None = None
     type: TransactionType | None = None

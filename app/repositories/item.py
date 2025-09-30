@@ -1,10 +1,10 @@
 from typing import Iterable
 
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Item
-from app.schemas import ItemCreate, ItemRead, ItemUpdate
+from app.schemas import ItemCreate, ItemRead, ItemType, ItemUpdate
 
 
 class ItemRepository:
@@ -24,8 +24,18 @@ class ItemRepository:
             return None
         return ItemRead.model_validate(instance)
 
-    async def list_many(self, *, offset: int = 0, limit: int = 100) -> list[ItemRead]:
-        result = await self._session.execute(select(Item).offset(offset).limit(limit))
+    async def list_many(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 100,
+        item_type: ItemType | None = None,
+    ) -> list[ItemRead]:
+        query: Select[tuple[Item]] = select(Item)
+        if item_type is not None:
+            query = query.where(Item.type == item_type)
+
+        result = await self._session.execute(query.offset(offset).limit(limit))
         return self._map_many(result.scalars().all())
 
     async def update(self, name: str, data: ItemUpdate) -> ItemRead | None:

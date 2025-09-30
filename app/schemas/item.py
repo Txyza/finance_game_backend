@@ -7,14 +7,17 @@ class ItemType(str, Enum):
     FINANCE = "finance"
     PERMANENT = "permanent"
     DEBET = "debet"
+    RENT = "rent"
 
 
 class ItemNames(StrEnum):
-    ENERGY_DRINK = "energy_drink"
-    TACTICAL_PLANNER = "tactical_planner"
-    RISK_SHIELD = "risk_shield"
+    ENERGY_SHOT = "Энергетический шот"
+    MAX_CAPACITY_CHIP = "Чип расширения батареи"
+    RECOVERY_STIMULATOR = "Биостимулятор восстановления"
+    SHIELD_EMITTER = "Эмиттер защиты"
     SMART_MIR = "smart_mir"
     SUPREME_MIR = "supreme_mir"
+    APARTMENT_RENT = "Аренда квартиры"
 
 
 class ItemBase(BaseModel):

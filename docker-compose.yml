@@ -84,6 +84,8 @@ services:
       - ENVIRONMENT=development
       - DEBUG=True
     depends_on:
+      api:
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:

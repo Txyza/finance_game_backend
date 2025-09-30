@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import math
+from datetime import datetime, timezone
 from typing import Final, Iterable
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.utils.items import InventoryEntry
+from app.schemas import ItemType
 from app.core.constants import EnergyDefaults, USER_ACTIVITY_KEY_PREFIX
 from app.core.redis import redis_client
 from app.repositories import UserRepository
@@ -55,17 +58,64 @@ def calculate_max_energy(
     user: UserRead,
     inventory_with_items: Iterable[InventoryEntry],
 ) -> int:
-    """Compute the maximum energy considering boosters."""
+    """Compute the maximum energy considering percentage boosters."""
 
-    energy_boost = 0.0
+    total_percent = 0.0
     for user_item, item in inventory_with_items:
-        boost = item.energy_max_boost
+        boost = max(0.0, item.energy_max_boost)
         if boost <= 0:
             continue
-        if item.exclusive:
-            energy_boost += boost
-        else:
-            energy_boost += boost * user_item.amount
 
-    base_cap = int(EnergyDefaults.MAX_ENERGY + energy_boost)
-    return max(base_cap, user.energy)
+        count = _effective_item_count(user_item.amount, item.exclusive)
+        if count == 0:
+            continue
+
+        total_percent += boost * count
+
+    base_max = float(EnergyDefaults.MAX_ENERGY)
+    boosted_cap = math.ceil(base_max * (1.0 + total_percent / 100.0))
+    return max(boosted_cap, user.energy)
+
+
+def calculate_recovery_amount(
+    inventory_with_items: Iterable[InventoryEntry],
+) -> int:
+    """Compute passive energy recovery amount per interval using boosters."""
+
+    total_percent = 0.0
+    has_active_rent = False
+    now = datetime.now(timezone.utc)
+    for user_item, item in inventory_with_items:
+        if item.type == ItemType.RENT:
+            if user_item.expaired_at is None or user_item.expaired_at <= now:
+                continue
+            has_active_rent = True
+            continue
+
+        boost = max(0.0, item.energy_recovery_boost)
+        if boost <= 0:
+            continue
+
+        count = _effective_item_count(user_item.amount, item.exclusive)
+        if count == 0:
+            continue
+
+        total_percent += boost * count
+
+    if not has_active_rent:
+        return 0
+
+    base_recovery = float(EnergyDefaults.RECOVERY_PER_INTERVAL)
+    boosted_recovery = base_recovery * (1.0 + total_percent / 100.0)
+    # Ensure at least one unit is recovered when boosters yield a fraction.
+    return max(1, math.ceil(boosted_recovery))
+
+
+def _effective_item_count(amount: int, exclusive: bool) -> int:
+    """Return the number of stacks to apply for a booster item."""
+
+    if amount <= 0:
+        return 0
+    if exclusive:
+        return 1
+    return amount

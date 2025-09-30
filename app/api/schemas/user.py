@@ -29,3 +29,4 @@ class UserProfileResponse(BaseModel):
     key_rate: Decimal = Field(ge=0)
     inflation: Decimal = Field(ge=0)
     ready_to_reward_tasks_counts: dict[TaskType, int]
+    apartment_seconds_left: int = Field(ge=0)
