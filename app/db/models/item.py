@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Enum, Float, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -34,7 +35,12 @@ class Item(Base):
         Float, nullable=False, default=0.0
     )
     image: Mapped[str | None] = mapped_column(Text, nullable=True)
-
+    _metadata: Mapped[dict[str, object]] = mapped_column(
+        "metadata",
+        JSONB,
+        nullable=False,
+        default=dict,
+    )
     user_items: Mapped[list["UserItem"]] = relationship(
         "UserItem",
         back_populates="item",

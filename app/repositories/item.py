@@ -12,7 +12,10 @@ class ItemRepository:
         self._session = session
 
     async def create(self, data: ItemCreate) -> ItemRead:
-        item = Item(**data.model_dump())
+        payload = data.model_dump()
+        metadata = payload.pop("metadata", {})
+        item = Item(**payload)
+        item._metadata = metadata
         self._session.add(item)
         await self._session.flush()
         await self._session.refresh(item)
@@ -44,8 +47,12 @@ class ItemRepository:
             return None
 
         payload = data.model_dump(exclude_unset=True, exclude_none=True)
+        metadata = payload.pop("metadata", None)
         for field, value in payload.items():
             setattr(instance, field, value)
+
+        if metadata is not None:
+            instance._metadata = metadata
 
         await self._session.flush()
         await self._session.refresh(instance)

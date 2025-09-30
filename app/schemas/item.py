@@ -7,6 +7,7 @@ class ItemType(str, Enum):
     FINANCE = "finance"
     PERMANENT = "permanent"
     DEBET = "debet"
+    SAVINGS = "savings"
     RENT = "rent"
 
 
@@ -17,6 +18,7 @@ class ItemNames(StrEnum):
     SHIELD_EMITTER = "Эмиттер защиты"
     SMART_MIR = "smart_mir"
     SUPREME_MIR = "supreme_mir"
+    SAVINGS_ACCOUNT_BASIC = "Накопительный счет базовый"
     APARTMENT_RENT = "Аренда квартиры"
 
 
@@ -30,6 +32,10 @@ class ItemBase(BaseModel):
     energy_shild_boost: float = 0.0
     duration_seconds: int = Field(default=0, ge=0)
     image: str | None = None
+    metadata: dict[str, object] = Field(
+        default_factory=dict,
+        validation_alias="_metadata",
+    )
 
 
 class ItemCreate(ItemBase):
@@ -46,6 +52,7 @@ class ItemUpdate(BaseModel):
     energy_shild_boost: float | None = None
     duration_seconds: int | None = Field(default=None, ge=0)
     image: str | None = None
+    metadata: dict[str, object] | None = None
 
 
 class ItemRead(ItemBase):

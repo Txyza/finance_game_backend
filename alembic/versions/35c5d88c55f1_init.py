@@ -28,7 +28,9 @@ def upgrade() -> None:
         sa.Column("price", sa.Integer(), nullable=False),
         sa.Column(
             "type",
-            sa.Enum("finance", "permanent", "debet", "rent", name="item_type"),
+            sa.Enum(
+                "finance", "permanent", "debet", "rent", "savings", name="item_type"
+            ),
             nullable=False,
         ),
         sa.Column(
@@ -42,6 +44,12 @@ def upgrade() -> None:
         sa.Column("energy_recovery_boost", sa.Float(), nullable=False),
         sa.Column("energy_shild_boost", sa.Float(), nullable=False),
         sa.Column("image", sa.Text(), nullable=True),
+        sa.Column(
+            "metadata",
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'{}'::jsonb"),
+        ),
         sa.PrimaryKeyConstraint("name"),
     )
     op.create_table(

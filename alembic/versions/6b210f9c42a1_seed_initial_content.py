@@ -32,6 +32,7 @@ _ITEMS_DATA = [
         "energy_shild_boost": 0.0,
         "image": None,
         "duration_seconds": 2_147_483_647,
+        "metadata": {},
     },
     {
         "name": "supreme_mir",
@@ -44,6 +45,7 @@ _ITEMS_DATA = [
         "energy_shild_boost": 0.0,
         "image": None,
         "duration_seconds": 2_147_483_647,
+        "metadata": {},
     },
     {
         "name": "Энергетический шот",
@@ -56,6 +58,7 @@ _ITEMS_DATA = [
         "energy_shild_boost": 0.0,
         "image": None,
         "duration_seconds": 0,
+        "metadata": {},
     },
     {
         "name": "Чип расширения батареи",
@@ -68,6 +71,7 @@ _ITEMS_DATA = [
         "energy_shild_boost": 0.0,
         "image": None,
         "duration_seconds": 86_400,
+        "metadata": {},
     },
     {
         "name": "Биостимулятор восстановления",
@@ -80,6 +84,7 @@ _ITEMS_DATA = [
         "energy_shild_boost": 0.0,
         "image": None,
         "duration_seconds": 21_600,
+        "metadata": {},
     },
     {
         "name": "Эмиттер защиты",
@@ -92,6 +97,7 @@ _ITEMS_DATA = [
         "energy_shild_boost": 0.2,
         "image": None,
         "duration_seconds": 43_200,
+        "metadata": {},
     },
     {
         "name": "Аренда квартиры",
@@ -104,6 +110,24 @@ _ITEMS_DATA = [
         "energy_shild_boost": 0.0,
         "image": None,
         "duration_seconds": 259_200,
+        "metadata": {},
+    },
+    {
+        "name": "Накопительный счет базовый",
+        "description": "Сберегательный продукт с фиксированной ставкой",
+        "price": 0,
+        "type": "savings",
+        "exclusive": False,
+        "energy_max_boost": 0.0,
+        "energy_recovery_boost": 0.0,
+        "energy_shild_boost": 0.0,
+        "image": None,
+        "duration_seconds": 0,
+        "metadata": {
+            "interest_rate": 0.075,
+            "capitalization_period_days": 30,
+            "currency": "RUB",
+        },
     },
 ]
 
@@ -345,7 +369,13 @@ _TASKS_DATA = [
 ]
 
 _ITEM_TYPE = postgresql.ENUM(
-    "finance", "permanent", "debet", "rent", name="item_type", create_type=False
+    "finance",
+    "permanent",
+    "debet",
+    "rent",
+    "savings",
+    name="item_type",
+    create_type=False,
 )
 _TASK_TYPE = postgresql.ENUM(
     "daely", "weakly", "quest", name="task_type", create_type=False
