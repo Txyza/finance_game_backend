@@ -24,6 +24,16 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     beat_schedule={
+        "daily-financial-events": {
+            "task": "app.celery.tasks.financial_events.run_daily_financial_events",
+            "schedule": crontab(hour=0, minute=0),
+            "options": {"queue": "financial"},
+        },
+        "check-expired-deposits": {
+            "task": "app.celery.tasks.financial_events.process_expired_deposits",
+            "schedule": crontab(minute=0),  # Каждый час
+            "options": {"queue": "financial"},
+        },
         "daily-system-maintenance": {
             "task": "app.celery.tasks.daily.run_daily_maintenance",
             "schedule": crontab(hour=0, minute=0),

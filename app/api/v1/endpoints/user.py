@@ -156,13 +156,11 @@ async def _build_user_profile(
     key_rate = Decimal("0")
     inflation = Decimal("0")
 
-    key_rate_setting = await world_setting_repository.get(WorldSettingName.KEY_RATE)
-    if key_rate_setting is not None:
-        key_rate = key_rate_setting.value
+    key_rate_value = await world_setting_repository.get_key_rate()
+    key_rate = Decimal(str(key_rate_value))
 
-    inflation_setting = await world_setting_repository.get(WorldSettingName.INFLATION)
-    if inflation_setting is not None:
-        inflation = inflation_setting.value
+    inflation_value = await world_setting_repository.get_inflation_rate()
+    inflation = Decimal(str(inflation_value))
 
     return UserProfileResponse(
         id=user.id,
