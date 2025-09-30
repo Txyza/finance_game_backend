@@ -29,7 +29,7 @@ def upgrade() -> None:
         sa.Column(
             "type",
             sa.Enum(
-                "finance", "permanent", "debet", "rent", "savings", name="item_type"
+                "finance", "permanent", "debet", "rent", "savings", "deposit", name="item_type"
             ),
             nullable=False,
         ),
@@ -119,7 +119,20 @@ def upgrade() -> None:
         sa.Column("datetime_end", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "type",
-            sa.Enum("bank", "event", "work", "task", name="transaction_type"),
+            sa.Enum(
+                "bank",
+                "event",
+                "work",
+                "task",
+                "savings_deposit",
+                "savings_withdrawal",
+                "savings_interest",
+                "deposit_open",
+                "deposit_close_early",
+                "deposit_close_matured",
+                "deposit_interest_payment",
+                name="transaction_type"
+            ),
             nullable=False,
         ),
         sa.Column("name", sa.String(length=255), nullable=False),

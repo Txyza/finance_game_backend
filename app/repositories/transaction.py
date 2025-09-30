@@ -60,6 +60,22 @@ class TransactionRepository:
         result = await self._session.execute(stmt)
         return self._map_many(result.scalars().all())
 
+    async def list_by_instrument_id(
+        self,
+        instrument_id: str,
+        *,
+        limit: int = 100,
+    ) -> list[TransactionRead]:
+        """Get transactions by instrument_id (e.g., savings account ID)"""
+        stmt = (
+            select(Transaction)
+            .where(Transaction.instrument_id == instrument_id)
+            .order_by(Transaction.datetime_start.desc())
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        return self._map_many(result.scalars().all())
+
     async def update(
         self,
         transaction_id: uuid.UUID,

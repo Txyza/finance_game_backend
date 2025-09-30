@@ -4,52 +4,68 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class SavingsAccountMeta(BaseModel):
-    interest_rate: float = Field(ge=0)
-    capitalization_period_days: int | None = Field(default=None, ge=1)
-    currency: str | None = None
-
-
 class SavingsAccountListItem(BaseModel):
+    """Элемент списка накопительных счетов"""
     id: uuid.UUID
-    item_name: str
-    balance: int = Field(ge=0)
-    interest_rate: float = Field(ge=0)
-    opened_at: datetime
-    expires_at: datetime | None = None
+    account_name: str = Field(description="Название счета (Basic, Premium)")
+    account_number: str = Field(description="Номер счета (до 6 цифр)")
+    current_interest_rate: float = Field(ge=0, description="Текущая ставка по счету")
+    balance: int = Field(ge=0, description="Баланс счета в копейках")
 
 
 class SavingsAccountListResponse(BaseModel):
+    """Ответ со списком накопительных счетов"""
     accounts: list[SavingsAccountListItem]
 
 
-class SavingsAccountOpenRequest(BaseModel):
-    item_name: str = Field(max_length=255)
-    initial_deposit: int = Field(default=0, ge=0)
+class SavingsAccountDetail(BaseModel):
+    """Детальная карточка накопительного счета"""
+    id: uuid.UUID
+    account_name: str = Field(description="Название счета (Basic, Premium)")
+    account_number: str = Field(description="Номер счета (до 6 цифр)")
+    current_interest_rate: float = Field(ge=0, description="Текущая ставка по счету")
+    balance: int = Field(ge=0, description="Баланс счета в копейках")
+    opened_at: datetime = Field(description="Дата открытия счета")
+    expires_at: datetime | None = Field(default=None, description="Дата истечения срока действия")
 
 
-class SavingsAccountOpenResponse(BaseModel):
+class SavingsAccountCreateRequest(BaseModel):
+    """Запрос на создание накопительного счета"""
+    account_type: str = Field(description="Тип накопительного счета")
+    initial_deposit: int = Field(default=0, ge=0, description="Начальный депозит в копейках")
+
+
+class SavingsAccountCreateResponse(BaseModel):
+    """Ответ на создание накопительного счета"""
     account_id: uuid.UUID
+    account_number: str
 
 
 class SavingsAccountOperationRequest(BaseModel):
-    amount: int = Field(gt=0)
+    """Запрос на операцию по счету (пополнение/снятие)"""
+    amount: int = Field(gt=0, description="Сумма операции в копейках")
 
 
 class SavingsAccountCloseResponse(BaseModel):
+    """Ответ на закрытие накопительного счета"""
     account_id: uuid.UUID
-    transferred_amount: int = Field(ge=0)
+    transferred_amount: int = Field(ge=0, description="Переведенная сумма в копейках")
 
 
 class SavingsAccountTransaction(BaseModel):
+    """Транзакция по накопительному счету"""
     id: uuid.UUID
-    amount: int
-    datetime_start: datetime
-    datetime_end: datetime | None = None
-    type: str
-    description: str | None = None
+    name: str = Field(description="Название операции (пополнение, снятие, проценты)")
+    amount: int = Field(description="Сумма в копейках (не может быть 0)")
+    datetime_start: datetime = Field(description="Дата операции")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 
 class SavingsAccountTransactionsResponse(BaseModel):
+    """Ответ со списком транзакций по счету"""
     account_id: uuid.UUID
     transactions: list[SavingsAccountTransaction]

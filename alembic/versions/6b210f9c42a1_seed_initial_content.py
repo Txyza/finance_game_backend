@@ -374,6 +374,7 @@ _ITEM_TYPE = postgresql.ENUM(
     "debet",
     "rent",
     "savings",
+    "deposit",
     name="item_type",
     create_type=False,
 )

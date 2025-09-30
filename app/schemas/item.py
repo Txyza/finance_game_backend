@@ -8,6 +8,7 @@ class ItemType(str, Enum):
     PERMANENT = "permanent"
     DEBET = "debet"
     SAVINGS = "savings"
+    DEPOSIT = "deposit"
     RENT = "rent"
 
 

@@ -10,6 +10,13 @@ class TransactionType(str, Enum):
     EVENT = "event"
     WORK = "work"
     TASK = "task"
+    SAVINGS_DEPOSIT = "savings_deposit"
+    SAVINGS_WITHDRAWAL = "savings_withdrawal"
+    SAVINGS_INTEREST = "savings_interest"
+    DEPOSIT_OPEN = "deposit_open"
+    DEPOSIT_CLOSE_EARLY = "deposit_close_early"
+    DEPOSIT_CLOSE_MATURED = "deposit_close_matured"
+    DEPOSIT_INTEREST_PAYMENT = "deposit_interest_payment"
 
 
 class TransactionBase(BaseModel):

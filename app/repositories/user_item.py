@@ -26,6 +26,21 @@ class UserItemRepository:
             return None
         return UserItemRead.model_validate(instance)
 
+    async def get_by_id(self, user_item_id: uuid.UUID) -> UserItemRead | None:
+        """Alias for get method for compatibility"""
+        return await self.get(user_item_id)
+
+    async def update_amount(self, user_item_id: uuid.UUID, new_amount: int) -> UserItemRead | None:
+        """Update amount for specific user item"""
+        instance = await self._session.get(UserItem, user_item_id)
+        if instance is None:
+            return None
+
+        instance.amount = new_amount
+        await self._session.flush()
+        await self._session.refresh(instance)
+        return UserItemRead.model_validate(instance)
+
     async def list_by_user(
         self,
         user_id: uuid.UUID,
