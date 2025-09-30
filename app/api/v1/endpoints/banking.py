@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
+from typing import Any, Mapping
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter
 
 from app.api.dependencies import CurrentUser, SessionDep
 from app.api.schemas.banking import (
@@ -32,7 +33,9 @@ def _calculate_days_remaining(expires_at: datetime) -> int:
     return max(0, delta.days)
 
 
-def _get_display_name(item_name: str, item_type: ItemType, meta: dict = None) -> str:
+def _get_display_name(
+    item_name: str, item_type: ItemType, meta: Mapping[str, Any] | None = None
+) -> str:
     """
     Возвращает человекочитаемое название инструмента
 
@@ -106,7 +109,9 @@ async def get_banking_instruments(
                 name=_get_display_name(item.name, item.type, meta),
                 account_number=meta.get("card_number", "****"),
                 balance=user_item.amount,
-                opened_at=datetime.fromisoformat(meta.get("opened_at", datetime.now(timezone.utc).isoformat())),
+                opened_at=datetime.fromisoformat(
+                    meta.get("opened_at", datetime.now(timezone.utc).isoformat())
+                ),
             )
             debit_cards.append(instrument)
             total_balance += user_item.amount
@@ -120,7 +125,9 @@ async def get_banking_instruments(
                 account_number=meta.get("account_number", "000000"),
                 balance=user_item.amount,
                 interest_rate=meta.get("interest_rate", 5.0),
-                opened_at=datetime.fromisoformat(meta.get("opened_at", datetime.now(timezone.utc).isoformat())),
+                opened_at=datetime.fromisoformat(
+                    meta.get("opened_at", datetime.now(timezone.utc).isoformat())
+                ),
                 expires_at=user_item.expaired_at,
             )
             savings_accounts.append(instrument)
@@ -128,7 +135,9 @@ async def get_banking_instruments(
 
         elif item.type == ItemType.DEPOSIT or item.name.startswith("deposit_"):
             # Вклад
-            expires_at = datetime.fromisoformat(meta.get("expires_at", datetime.now(timezone.utc).isoformat()))
+            expires_at = datetime.fromisoformat(
+                meta.get("expires_at", datetime.now(timezone.utc).isoformat())
+            )
             instrument = BankingInstrument(
                 id=user_item.id,
                 type=InstrumentType.DEPOSIT,
@@ -136,7 +145,9 @@ async def get_banking_instruments(
                 account_number=meta.get("account_number", "000000"),
                 balance=user_item.amount,
                 interest_rate=meta.get("interest_rate", 0.0),
-                opened_at=datetime.fromisoformat(meta.get("opened_at", datetime.now(timezone.utc).isoformat())),
+                opened_at=datetime.fromisoformat(
+                    meta.get("opened_at", datetime.now(timezone.utc).isoformat())
+                ),
                 expires_at=expires_at,
                 days_remaining=_calculate_days_remaining(expires_at),
             )

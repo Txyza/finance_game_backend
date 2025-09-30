@@ -1,16 +1,18 @@
 """
 Сервис для обработки ежедневных игровых событий
 """
+
 import logging
 import random
-from datetime import datetime, timezone, timedelta
-from decimal import Decimal
+from datetime import datetime, timezone
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import UserItem, User, Transaction, Item
-from app.repositories import TransactionRepository, UserItemRepository, ItemRepository, WorldSettingRepository
+from app.db.models import UserItem, User, Item
+from app.repositories import (
+    TransactionRepository,
+    WorldSettingRepository,
+)
 from app.schemas.transaction import TransactionCreate, TransactionType
 
 logger = logging.getLogger(__name__)
@@ -30,9 +32,11 @@ class DailyEventsService:
         async with self.session_factory() as session:
             try:
                 # Получаем все накопительные счета
-                stmt = select(UserItem).where(
-                    UserItem.item_name.in_(["savings_basic", "savings_premium"])
-                ).where(UserItem.amount > 0)
+                stmt = (
+                    select(UserItem)
+                    .where(UserItem.item_name.in_(["savings_basic", "savings_premium"]))
+                    .where(UserItem.amount > 0)
+                )
 
                 result = await session.execute(stmt)
                 savings_accounts = result.scalars().all()
@@ -64,7 +68,9 @@ class DailyEventsService:
                         )
 
                 await session.commit()
-                logger.info(f"Processed interest for {len(savings_accounts)} savings accounts")
+                logger.info(
+                    f"Processed interest for {len(savings_accounts)} savings accounts"
+                )
 
             except Exception as e:
                 await session.rollback()
@@ -79,30 +85,36 @@ class DailyEventsService:
         async with self.session_factory() as session:
             try:
                 # Получаем все активные вклады
-                stmt = select(UserItem).where(
-                    UserItem.item_name.in_(["deposit_kopit", "deposit_v_pluse"])
-                ).where(UserItem.amount > 0)
+                stmt = (
+                    select(UserItem)
+                    .where(UserItem.item_name.in_(["deposit_kopit", "deposit_v_pluse"]))
+                    .where(UserItem.amount > 0)
+                )
 
                 result = await session.execute(stmt)
                 deposits = result.scalars().all()
 
                 transaction_repo = TransactionRepository(session)
-                user_item_repo = UserItemRepository(session)
-
                 for deposit in deposits:
                     meta = deposit.meta or {}
                     payment_method = meta.get("interest_payment_method", "at_end")
                     annual_rate = meta.get("interest_rate", 10.0)
 
                     # Проверяем, не истек ли вклад
-                    expires_at = datetime.fromisoformat(meta.get("expires_at", datetime.now(timezone.utc).isoformat()))
+                    expires_at = datetime.fromisoformat(
+                        meta.get("expires_at", datetime.now(timezone.utc).isoformat())
+                    )
                     if datetime.now(timezone.utc) >= expires_at:
                         continue
 
                     # Расчет процентов в зависимости от метода выплаты
                     if payment_method == "monthly_capitalized":
                         # Ежемесячная капитализация (проверяем каждый день, начисляем раз в месяц)
-                        opened_at = datetime.fromisoformat(meta.get("opened_at", datetime.now(timezone.utc).isoformat()))
+                        opened_at = datetime.fromisoformat(
+                            meta.get(
+                                "opened_at", datetime.now(timezone.utc).isoformat()
+                            )
+                        )
                         days_since_open = (datetime.now(timezone.utc) - opened_at).days
 
                         # Если прошел месяц с открытия или с последней капитализации
@@ -128,7 +140,11 @@ class DailyEventsService:
 
                     elif payment_method == "monthly_to_account":
                         # Ежемесячно на счет (не капитализируется)
-                        opened_at = datetime.fromisoformat(meta.get("opened_at", datetime.now(timezone.utc).isoformat()))
+                        opened_at = datetime.fromisoformat(
+                            meta.get(
+                                "opened_at", datetime.now(timezone.utc).isoformat()
+                            )
+                        )
                         days_since_open = (datetime.now(timezone.utc) - opened_at).days
 
                         if days_since_open % 30 == 0 and days_since_open > 0:
@@ -138,10 +154,16 @@ class DailyEventsService:
 
                             if interest_amount > 0:
                                 # Находим дебетовый счет пользователя
-                                debet_stmt = select(UserItem).where(
-                                    UserItem.user_id == deposit.user_id,
-                                    UserItem.item_name.in_(["smart_mir", "supreme_mir"])
-                                ).limit(1)
+                                debet_stmt = (
+                                    select(UserItem)
+                                    .where(
+                                        UserItem.user_id == deposit.user_id,
+                                        UserItem.item_name.in_(
+                                            ["smart_mir", "supreme_mir"]
+                                        ),
+                                    )
+                                    .limit(1)
+                                )
 
                                 debet_result = await session.execute(debet_stmt)
                                 debet_account = debet_result.scalar_one_or_none()
@@ -191,9 +213,11 @@ class DailyEventsService:
         async with self.session_factory() as session:
             try:
                 # Получаем все вклады
-                stmt = select(UserItem).where(
-                    UserItem.item_name.in_(["deposit_kopit", "deposit_v_pluse"])
-                ).where(UserItem.amount > 0)
+                stmt = (
+                    select(UserItem)
+                    .where(UserItem.item_name.in_(["deposit_kopit", "deposit_v_pluse"]))
+                    .where(UserItem.amount > 0)
+                )
 
                 result = await session.execute(stmt)
                 deposits = result.scalars().all()
@@ -203,7 +227,9 @@ class DailyEventsService:
 
                 for deposit in deposits:
                     meta = deposit.meta or {}
-                    expires_at = datetime.fromisoformat(meta.get("expires_at", now.isoformat()))
+                    expires_at = datetime.fromisoformat(
+                        meta.get("expires_at", now.isoformat())
+                    )
 
                     # Если вклад истек
                     if now >= expires_at:
@@ -225,10 +251,14 @@ class DailyEventsService:
                             total_amount = deposit.amount
 
                         # Находим дебетовый счет
-                        debet_stmt = select(UserItem).where(
-                            UserItem.user_id == deposit.user_id,
-                            UserItem.item_name.in_(["smart_mir", "supreme_mir"])
-                        ).limit(1)
+                        debet_stmt = (
+                            select(UserItem)
+                            .where(
+                                UserItem.user_id == deposit.user_id,
+                                UserItem.item_name.in_(["smart_mir", "supreme_mir"]),
+                            )
+                            .limit(1)
+                        )
 
                         debet_result = await session.execute(debet_stmt)
                         debet_account = debet_result.scalar_one_or_none()
@@ -245,7 +275,7 @@ class DailyEventsService:
                                     amount=-total_amount,
                                     datetime_start=now,
                                     type=TransactionType.DEPOSIT_CLOSE_MATURED,
-                                    name=f"Автоматическое закрытие вклада по истечении срока",
+                                    name="Автоматическое закрытие вклада по истечении срока",
                                 )
                             )
 
@@ -264,7 +294,9 @@ class DailyEventsService:
                             # Обнуляем вклад
                             deposit.amount = 0
 
-                            logger.info(f"Auto-closed expired deposit {deposit.id} for user {deposit.user_id}")
+                            logger.info(
+                                f"Auto-closed expired deposit {deposit.id} for user {deposit.user_id}"
+                            )
 
                 await session.commit()
 
@@ -293,7 +325,9 @@ class DailyEventsService:
                 await world_repo.set_key_rate(new_rate)
                 await session.commit()
 
-                logger.info(f"Key rate updated from {current_rate:.2f}% to {new_rate:.2f}%")
+                logger.info(
+                    f"Key rate updated from {current_rate:.2f}% to {new_rate:.2f}%"
+                )
 
             except Exception as e:
                 await session.rollback()
@@ -331,7 +365,9 @@ class DailyEventsService:
                         items_updated += 1
 
                 await session.commit()
-                logger.info(f"Applied {daily_inflation:.4f}% daily inflation to {items_updated} items (annual: {annual_inflation:.2f}%)")
+                logger.info(
+                    f"Applied {daily_inflation:.4f}% daily inflation to {items_updated} items (annual: {annual_inflation:.2f}%)"
+                )
 
             except Exception as e:
                 await session.rollback()
@@ -345,7 +381,9 @@ class DailyEventsService:
         async with self.session_factory() as session:
             try:
                 # Получаем всех пользователей
-                stmt = select(User).where(User.energy < 100)  # Предполагаем максимум 100
+                stmt = select(User).where(
+                    User.energy < 100
+                )  # Предполагаем максимум 100
                 result = await session.execute(stmt)
                 users = result.scalars().all()
 

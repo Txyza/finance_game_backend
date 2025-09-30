@@ -1,7 +1,17 @@
 from fastapi import APIRouter, Depends
 
 from app.api.auth import get_current_user
-from app.api.v1.endpoints import analytics, banking, deposit, health, savings, store, task, user, work
+from app.api.v1.endpoints import (
+    analytics,
+    banking,
+    deposit,
+    health,
+    savings,
+    store,
+    task,
+    user,
+    work,
+)
 
 api_router = APIRouter()
 

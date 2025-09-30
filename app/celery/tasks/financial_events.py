@@ -1,6 +1,7 @@
 """
 Celery задачи для финансовых игровых событий
 """
+
 import logging
 from datetime import datetime, timezone
 
@@ -165,7 +166,7 @@ def run_daily_financial_events() -> str:
         return "All daily financial events completed successfully"
 
     try:
-        result = asyncio.run(_process())
+        asyncio.run(_process())
         timestamp = datetime.now(timezone.utc).isoformat()
         message = f"Daily financial events completed at {timestamp}"
         logger.info(message)

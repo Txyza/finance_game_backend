@@ -28,7 +28,9 @@ class WorldSettingRepository:
         value = result.scalar_one_or_none()
         return float(value) if value is not None else None
 
-    async def set_value(self, name: str, value: float, description: str = None) -> bool:
+    async def set_value(
+        self, name: str, value: float, description: Optional[str] = None
+    ) -> bool:
         """
         Установить значение настройки
 
@@ -57,7 +59,7 @@ class WorldSettingRepository:
             setting = WorldSetting(
                 name=name,
                 value=Decimal(str(value)),
-                description=description or f"Автоматически созданная настройка: {name}"
+                description=description or f"Автоматически созданная настройка: {name}",
             )
             self._session.add(setting)
             await self._session.flush()
@@ -105,7 +107,7 @@ class WorldSettingRepository:
         await self.set_value(
             "key_rate",
             rate,
-            "Ключевая ставка Центрального Банка. Влияет на доходность активов и проценты по кредитам"
+            "Ключевая ставка Центрального Банка. Влияет на доходность активов и проценты по кредитам",
         )
 
     async def get_inflation_rate(self) -> float:
@@ -128,5 +130,5 @@ class WorldSettingRepository:
         await self.set_value(
             "inflation",
             rate,
-            "Годовой уровень инфляции. Влияет на стоимость активов и предметов"
+            "Годовой уровень инфляции. Влияет на стоимость активов и предметов",
         )

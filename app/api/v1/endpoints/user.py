@@ -28,7 +28,6 @@ from app.schemas import (
     UserCreate,
     UserItemCreate,
     UserRead,
-    WorldSettingName,
 )
 
 router = APIRouter(prefix="/user", tags=["user"])

@@ -30,7 +30,9 @@ class UserItemRepository:
         """Alias for get method for compatibility"""
         return await self.get(user_item_id)
 
-    async def update_amount(self, user_item_id: uuid.UUID, new_amount: int) -> UserItemRead | None:
+    async def update_amount(
+        self, user_item_id: uuid.UUID, new_amount: int
+    ) -> UserItemRead | None:
         """Update amount for specific user item"""
         instance = await self._session.get(UserItem, user_item_id)
         if instance is None:

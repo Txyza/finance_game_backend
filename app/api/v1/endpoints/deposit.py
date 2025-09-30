@@ -2,6 +2,7 @@ import random
 import string
 from datetime import datetime, timezone, timedelta
 from uuid import UUID
+from typing import Any, Mapping
 
 from fastapi import APIRouter, HTTPException, status
 
@@ -11,6 +12,7 @@ from app.api.schemas.deposit import (
     DepositCreateRequest,
     DepositCreateResponse,
     DepositDetail,
+    DepositListItem,
     DepositListResponse,
     DepositTransaction,
     DepositTransactionsResponse,
@@ -31,10 +33,12 @@ def _generate_deposit_account_number() -> str:
     Returns:
         str: Номер счета из 6 цифр
     """
-    return ''.join(random.choices(string.digits, k=6))
+    return "".join(random.choices(string.digits, k=6))
 
 
-def _get_deposit_display_name(item_name: str, meta: dict = None) -> str:
+def _get_deposit_display_name(
+    item_name: str, meta: Mapping[str, Any] | None = None
+) -> str:
     """
     Возвращает человекочитаемое название вклада
 
@@ -97,29 +101,36 @@ async def list_deposits(
 
     # Фильтруем только вклады
     deposits = [
-        item for item in user_items
-        if item.item_name.startswith("deposit_") or
-           (item.meta and item.meta.get("account_type") == "deposit")
+        item
+        for item in user_items
+        if item.item_name.startswith("deposit_")
+        or (item.meta and item.meta.get("account_type") == "deposit")
     ]
 
-    deposit_list = []
+    deposit_list: list[DepositListItem] = []
     for deposit in deposits:
         meta = deposit.meta or {}
-        expires_at = datetime.fromisoformat(meta.get("expires_at", datetime.now(timezone.utc).isoformat()))
+        expires_at = datetime.fromisoformat(
+            meta.get("expires_at", datetime.now(timezone.utc).isoformat())
+        )
 
-        deposit_list.append({
-            "id": deposit.id,
-            "deposit_name": _get_deposit_display_name(deposit.item_name, meta),
-            "account_number": meta.get("account_number", "000000"),
-            "current_interest_rate": meta.get("interest_rate", 0.0),
-            "balance": deposit.amount,
-            "days_remaining": _calculate_days_remaining(expires_at),
-        })
+        deposit_list.append(
+            DepositListItem(
+                id=deposit.id,
+                deposit_name=_get_deposit_display_name(deposit.item_name, meta),
+                account_number=meta.get("account_number", "000000"),
+                current_interest_rate=meta.get("interest_rate", 0.0),
+                balance=deposit.amount,
+                days_remaining=_calculate_days_remaining(expires_at),
+            )
+        )
 
     return DepositListResponse(deposits=deposit_list)
 
 
-@router.post("", response_model=DepositCreateResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=DepositCreateResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_deposit(
     payload: DepositCreateRequest,
     current_user: CurrentUser,
@@ -195,7 +206,9 @@ async def create_deposit(
     }
 
     # Списываем с дебетового счета
-    await user_item_repository.update_amount(debet_item.id, debet_item.amount - payload.amount)
+    await user_item_repository.update_amount(
+        debet_item.id, debet_item.amount - payload.amount
+    )
 
     # Создаем вклад как UserItem
     user_item = await user_item_repository.create(
@@ -209,8 +222,7 @@ async def create_deposit(
 
     # Устанавливаем дату истечения для автоматического завершения
     await user_item_repository.update(
-        user_item.id,
-        UserItemUpdate(expaired_at=expires_at)
+        user_item.id, UserItemUpdate(expaired_at=expires_at)
     )
 
     # Создаем транзакцию списания с дебетового счета
@@ -282,8 +294,12 @@ async def get_deposit_detail(
             detail="Это не вклад",
         )
 
-    expires_at = datetime.fromisoformat(meta.get("expires_at", datetime.now(timezone.utc).isoformat()))
-    opened_at = datetime.fromisoformat(meta.get("opened_at", datetime.now(timezone.utc).isoformat()))
+    expires_at = datetime.fromisoformat(
+        meta.get("expires_at", datetime.now(timezone.utc).isoformat())
+    )
+    opened_at = datetime.fromisoformat(
+        meta.get("opened_at", datetime.now(timezone.utc).isoformat())
+    )
 
     return DepositDetail(
         id=deposit.id,
@@ -294,7 +310,9 @@ async def get_deposit_detail(
         opened_at=opened_at,
         expires_at=expires_at,
         days_remaining=_calculate_days_remaining(expires_at),
-        interest_payment_method=InterestPaymentMethod(meta.get("interest_payment_method", "at_end")),
+        interest_payment_method=InterestPaymentMethod(
+            meta.get("interest_payment_method", "at_end")
+        ),
     )
 
 
@@ -349,7 +367,9 @@ async def close_deposit_early(
 
     meta = deposit.meta or {}
     initial_amount = meta.get("initial_amount", deposit.amount)
-    expires_at = datetime.fromisoformat(meta.get("expires_at", datetime.now(timezone.utc).isoformat()))
+    expires_at = datetime.fromisoformat(
+        meta.get("expires_at", datetime.now(timezone.utc).isoformat())
+    )
 
     # Проверяем, не завершен ли уже вклад
     now = datetime.now(timezone.utc)
@@ -374,7 +394,9 @@ async def close_deposit_early(
         transaction_name = f"Закрытие {deposit_display_name} по истечении срока"
 
     # Пополняем дебетовый счет
-    await user_item_repository.update_amount(debet_item.id, debet_item.amount + transferred_amount)
+    await user_item_repository.update_amount(
+        debet_item.id, debet_item.amount + transferred_amount
+    )
 
     # Обнуляем баланс (закрываем вклад)
     await user_item_repository.update_amount(deposit_id, 0)

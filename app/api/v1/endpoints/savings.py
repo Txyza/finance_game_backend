@@ -11,6 +11,7 @@ from app.api.schemas.savings import (
     SavingsAccountCreateRequest,
     SavingsAccountCreateResponse,
     SavingsAccountDetail,
+    SavingsAccountListItem,
     SavingsAccountListResponse,
     SavingsAccountOperationRequest,
     SavingsAccountTransaction,
@@ -31,7 +32,7 @@ def _generate_account_number() -> str:
     Returns:
         str: Номер счета из 6 цифр
     """
-    return ''.join(random.choices(string.digits, k=6))
+    return "".join(random.choices(string.digits, k=6))
 
 
 def _get_savings_display_name(account_type: str) -> str:
@@ -92,27 +93,34 @@ async def list_savings_accounts(
 
     # Фильтруем только накопительные счета (можно добавить условие по item_name или meta)
     savings_accounts = [
-        item for item in user_items
-        if item.item_name.startswith("savings_") or
-           (item.meta and item.meta.get("account_type") == "savings")
+        item
+        for item in user_items
+        if item.item_name.startswith("savings_")
+        or (item.meta and item.meta.get("account_type") == "savings")
     ]
 
-    accounts = []
+    accounts: list[SavingsAccountListItem] = []
     for account in savings_accounts:
         meta = account.meta or {}
-        account_type = account.item_name.replace("savings_", "")  # Извлекаем тип из item_name
-        accounts.append({
-            "id": account.id,
-            "account_name": _get_savings_display_name(account_type),
-            "account_number": meta.get("account_number", "000000"),
-            "current_interest_rate": meta.get("interest_rate", 5.0),
-            "balance": account.amount,
-        })
+        account_type = account.item_name.replace(
+            "savings_", ""
+        )  # Извлекаем тип из item_name
+        accounts.append(
+            SavingsAccountListItem(
+                id=account.id,
+                account_name=_get_savings_display_name(account_type),
+                account_number=meta.get("account_number", "000000"),
+                current_interest_rate=meta.get("interest_rate", 5.0),
+                balance=account.amount,
+            )
+        )
 
     return SavingsAccountListResponse(accounts=accounts)
 
 
-@router.post("", response_model=SavingsAccountCreateResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=SavingsAccountCreateResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_savings_account(
     payload: SavingsAccountCreateRequest,
     current_user: CurrentUser,
@@ -214,7 +222,9 @@ async def get_savings_account_detail(
             detail="Это не накопительный счет",
         )
 
-    account_type = account.item_name.replace("savings_", "")  # Извлекаем тип из item_name
+    account_type = account.item_name.replace(
+        "savings_", ""
+    )  # Извлекаем тип из item_name
 
     return SavingsAccountDetail(
         id=account.id,
@@ -222,7 +232,9 @@ async def get_savings_account_detail(
         account_number=meta.get("account_number", "000000"),
         current_interest_rate=meta.get("interest_rate", 5.0),
         balance=account.amount,
-        opened_at=datetime.fromisoformat(meta.get("opened_at", datetime.now(timezone.utc).isoformat())),
+        opened_at=datetime.fromisoformat(
+            meta.get("opened_at", datetime.now(timezone.utc).isoformat())
+        ),
         expires_at=account.expaired_at,
     )
 
@@ -283,10 +295,14 @@ async def deposit_to_savings_account(
         )
 
     # Списываем с дебетового счета
-    await user_item_repository.update_amount(debet_item.id, debet_item.amount - payload.amount)
+    await user_item_repository.update_amount(
+        debet_item.id, debet_item.amount - payload.amount
+    )
 
     # Пополняем накопительный счет
-    await user_item_repository.update_amount(account_id, account.amount + payload.amount)
+    await user_item_repository.update_amount(
+        account_id, account.amount + payload.amount
+    )
 
     # Создаем транзакцию списания с дебетового счета
     await transaction_repository.create(
@@ -372,10 +388,14 @@ async def withdraw_from_savings_account(
     debet_item, _ = debet_entry
 
     # Снимаем с накопительного счета
-    await user_item_repository.update_amount(account_id, account.amount - payload.amount)
+    await user_item_repository.update_amount(
+        account_id, account.amount - payload.amount
+    )
 
     # Пополняем дебетовый счет
-    await user_item_repository.update_amount(debet_item.id, debet_item.amount + payload.amount)
+    await user_item_repository.update_amount(
+        debet_item.id, debet_item.amount + payload.amount
+    )
 
     # Создаем транзакцию снятия с накопительного счета
     await transaction_repository.create(
@@ -460,7 +480,9 @@ async def close_savings_account(
     )
 
 
-@router.get("/{account_id}/transactions", response_model=SavingsAccountTransactionsResponse)
+@router.get(
+    "/{account_id}/transactions", response_model=SavingsAccountTransactionsResponse
+)
 async def list_savings_account_transactions(
     account_id: UUID,
     current_user: CurrentUser,

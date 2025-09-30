@@ -29,7 +29,13 @@ def upgrade() -> None:
         sa.Column(
             "type",
             sa.Enum(
-                "finance", "permanent", "debet", "rent", "savings", "deposit", name="item_type"
+                "finance",
+                "permanent",
+                "debet",
+                "rent",
+                "savings",
+                "deposit",
+                name="item_type",
             ),
             nullable=False,
         ),
@@ -131,7 +137,7 @@ def upgrade() -> None:
                 "deposit_close_early",
                 "deposit_close_matured",
                 "deposit_interest_payment",
-                name="transaction_type"
+                name="transaction_type",
             ),
             nullable=False,
         ),
