@@ -3,6 +3,11 @@ from .analytics import (
     TransactionSummaryCategory,
     TransactionSummaryResponse,
 )
+from .banking import (
+    BankingInstrument,
+    BankingInstrumentsResponse,
+    InstrumentType,
+)
 from .deposit import (
     DepositCloseResponse,
     DepositCreateRequest,
@@ -41,6 +46,9 @@ __all__ = (
     "TransactionListResponse",
     "TransactionSummaryCategory",
     "TransactionSummaryResponse",
+    "BankingInstrument",
+    "BankingInstrumentsResponse",
+    "InstrumentType",
     "DepositCloseResponse",
     "DepositCreateRequest",
     "DepositCreateResponse",

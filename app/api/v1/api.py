@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.api.auth import get_current_user
-from app.api.v1.endpoints import analytics, deposit, health, savings, store, task, user, work
+from app.api.v1.endpoints import analytics, banking, deposit, health, savings, store, task, user, work
 
 api_router = APIRouter()
 
@@ -13,3 +13,4 @@ api_router.include_router(task.router, dependencies=[Depends(get_current_user)])
 api_router.include_router(analytics.router, dependencies=[Depends(get_current_user)])
 api_router.include_router(savings.router, dependencies=[Depends(get_current_user)])
 api_router.include_router(deposit.router, dependencies=[Depends(get_current_user)])
+api_router.include_router(banking.router, dependencies=[Depends(get_current_user)])
