@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 class WorldSettingName(StrEnum):
     KEY_RATE = "key_rate"
     INFLATION = "inflation"
+    AVG_INFLATION = "avg_inflation"
 
 
 class WorldSettingBase(BaseModel):

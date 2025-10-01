@@ -5,8 +5,9 @@ from typing import Iterable
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import UserItem
+from app.db.models import UserItem, Item
 from app.schemas import UserItemCreate, UserItemRead, UserItemUpdate
+from app.schemas.item import ItemType
 
 
 class UserItemRepository:
@@ -60,6 +61,63 @@ class UserItemRepository:
             .limit(limit)
         )
         return self._map_many(result.scalars().all())
+
+    async def list_active_by_item_types(
+        self,
+        item_types: list[ItemType],
+        *,
+        offset: int = 0,
+        limit: int = 10_000,
+    ) -> list[UserItemRead]:
+        """List active user items filtered by Item.type with positive amount."""
+        result = await self._session.execute(
+            select(UserItem)
+            .join(Item, Item.name == UserItem.item_name)
+            .where(Item.type.in_(item_types))
+            .where(UserItem.amount > 0)
+            .offset(offset)
+            .limit(limit)
+        )
+        return self._map_many(result.scalars().all())
+
+    async def list_active_savings_accounts(
+        self, *, offset: int = 0, limit: int = 10_000
+    ) -> list[UserItemRead]:
+        return await self.list_active_by_item_types(
+            [ItemType.SAVINGS], offset=offset, limit=limit
+        )
+
+    async def list_active_deposits(
+        self, *, offset: int = 0, limit: int = 10_000
+    ) -> list[UserItemRead]:
+        return await self.list_active_by_item_types(
+            [ItemType.DEPOSIT], offset=offset, limit=limit
+        )
+
+    async def list_savings_accounts(
+        self, *, offset: int = 0, limit: int = 10_000
+    ) -> list[UserItemRead]:
+        """List all savings accounts (by Item.type), regardless of balance."""
+        result = await self._session.execute(
+            select(UserItem)
+            .join(Item, Item.name == UserItem.item_name)
+            .where(Item.type == ItemType.SAVINGS)
+            .offset(offset)
+            .limit(limit)
+        )
+        return self._map_many(result.scalars().all())
+
+    async def get_first_debet_account(self, user_id: uuid.UUID) -> UserItemRead | None:
+        """Return first debet (debit) account for user via Item.type join."""
+        result = await self._session.execute(
+            select(UserItem)
+            .join(Item, Item.name == UserItem.item_name)
+            .where(UserItem.user_id == user_id)
+            .where(Item.type == ItemType.DEBET)
+            .limit(1)
+        )
+        instance = result.scalar_one_or_none()
+        return None if instance is None else UserItemRead.model_validate(instance)
 
     async def update(
         self,

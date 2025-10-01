@@ -6,8 +6,7 @@ import logging
 from datetime import datetime, timezone
 
 from app.celery import celery_app
-from app.db.database import async_session_maker
-from app.services.daily_events import DailyEventsService
+from app.celery.tasks.daily_events import DailyEventsService
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ def process_savings_interest() -> str:
     import asyncio
 
     async def _process():
-        service = DailyEventsService(async_session_maker)
+        service = DailyEventsService()
         await service.process_savings_interest()
         return "Savings interest processed successfully"
 
@@ -41,7 +40,7 @@ def process_deposits_interest() -> str:
     import asyncio
 
     async def _process():
-        service = DailyEventsService(async_session_maker)
+        service = DailyEventsService()
         await service.process_deposits_interest()
         return "Deposits interest processed successfully"
 
@@ -62,7 +61,7 @@ def process_expired_deposits() -> str:
     import asyncio
 
     async def _process():
-        service = DailyEventsService(async_session_maker)
+        service = DailyEventsService()
         await service.process_expired_deposits()
         return "Expired deposits processed successfully"
 
@@ -83,7 +82,7 @@ def update_key_rate() -> str:
     import asyncio
 
     async def _process():
-        service = DailyEventsService(async_session_maker)
+        service = DailyEventsService()
         await service.update_key_rate()
         return "Key rate updated successfully"
 
@@ -104,7 +103,7 @@ def apply_inflation() -> str:
     import asyncio
 
     async def _process():
-        service = DailyEventsService(async_session_maker)
+        service = DailyEventsService()
         await service.apply_inflation()
         return "Inflation applied successfully"
 
@@ -125,7 +124,7 @@ def restore_user_energy() -> str:
     import asyncio
 
     async def _process():
-        service = DailyEventsService(async_session_maker)
+        service = DailyEventsService()
         await service.restore_user_energy()
         return "User energy restored successfully"
 
@@ -146,7 +145,7 @@ def run_daily_financial_events() -> str:
     import asyncio
 
     async def _process():
-        service = DailyEventsService(async_session_maker)
+        service = DailyEventsService()
 
         # Начисляем проценты по накопительным счетам
         await service.process_savings_interest()
@@ -154,14 +153,8 @@ def run_daily_financial_events() -> str:
         # Начисляем проценты по вкладам
         await service.process_deposits_interest()
 
-        # Обновляем ключевую ставку
-        await service.update_key_rate()
-
         # Применяем инфляцию к ценам
         await service.apply_inflation()
-
-        # Обновляем энергию пользователей
-        await service.restore_user_energy()
 
         return "All daily financial events completed successfully"
 
@@ -173,4 +166,25 @@ def run_daily_financial_events() -> str:
         return message
     except Exception as e:
         logger.error(f"Error during daily financial events: {e}")
+        raise
+
+
+@celery_app.task(name="app.celery.tasks.financial_events.index_work_max_amount_yearly")
+def index_work_max_amount_yearly() -> str:
+    """
+    Ежегодная (раз в 28 дней) индексация work.max_amount по среднегодовой инфляции.
+    """
+    import asyncio
+
+    async def _process():
+        service = DailyEventsService()
+        await service.index_work_max_amount_yearly()
+        return "Work max_amount indexed"
+
+    try:
+        result = asyncio.run(_process())
+        logger.info("Work max_amount yearly indexation completed")
+        return result
+    except Exception as e:
+        logger.error(f"Error indexing work max_amount: {e}")
         raise

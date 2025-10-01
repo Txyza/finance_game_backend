@@ -58,10 +58,7 @@ async def list_work(
     items: list[WorkListItem] = []
     for work in works:
         required_energy = _calculate_energy_cost(work, inventory_with_items)
-        available_booster = min(
-            work.max_amount,
-            _calculate_amount_booster(current_user),
-        )
+        available_booster = _calculate_amount_booster(current_user)
         items.append(
             WorkListItem(
                 name=work.name,
@@ -180,7 +177,13 @@ async def stop_work(
         )
 
     experience_multiplier = _calculate_amount_booster(current_user)
-    amount = int(min(payload.points, 10000) * experience_multiplier)
+    # Учитываем только 0..10000 очков; переводим в долю от 10000
+    points_clamped = max(0, min(payload.points, 10_000))
+    ratio = points_clamped / 10_000.0
+    # Базовая оплата — доля от max_amount по набранным очкам
+    base_amount = int(round(work.max_amount * ratio))
+    # Применяем бустер как множитель к базовой оплате
+    amount = int(round(base_amount * experience_multiplier))
 
     now = datetime.now(timezone.utc)
     await transaction_repository.update(

@@ -16,8 +16,15 @@ from app.api.schemas.savings import (
     SavingsAccountOperationRequest,
     SavingsAccountTransaction,
     SavingsAccountTransactionsResponse,
+    SavingsAvailableProduct,
+    SavingsAvailableResponse,
 )
-from app.repositories import ItemRepository, TransactionRepository, UserItemRepository
+from app.repositories import (
+    ItemRepository,
+    TransactionRepository,
+    UserItemRepository,
+    WorldSettingRepository,
+)
 from app.schemas.transaction import TransactionCreate, TransactionType
 from app.schemas.user_item import UserItemCreate
 from app.api.utils.items import attach_items, find_primary_debet_item
@@ -52,24 +59,17 @@ def _get_savings_display_name(account_type: str) -> str:
     return name_mapping.get(account_type, "Накопительный счет")
 
 
-def _get_interest_rate_for_account_type(account_type: str) -> float:
-    """
-    Возвращает процентную ставку для типа накопительного счета
+def _get_interest_ratio(account_type: str) -> float:
+    """Коэффициент от ключевой ставки по типу счёта.
 
-    Args:
-        account_type: Тип счета (basic, premium, vip)
-
-    Returns:
-        float: Процентная ставка в процентах годовых
-               basic: 5.0%, premium: 7.5%, vip: 10.0%
-               По умолчанию: 5.0% для неизвестных типов
+    basic -> 0.60 (60%), premium -> 0.80 (80%).
+    Для неизвестных типов возвращаем 0.60.
     """
-    rates = {
-        "basic": 5.0,
-        "premium": 7.5,
-        "vip": 10.0,
+    ratios = {
+        "basic": 0.60,
+        "premium": 0.80,
     }
-    return rates.get(account_type, 5.0)
+    return ratios.get(account_type, 0.60)
 
 
 @router.get("", response_model=SavingsAccountListResponse)
@@ -143,10 +143,13 @@ async def create_savings_account(
 
     user_item_repository = UserItemRepository(session)
     transaction_repository = TransactionRepository(session)
+    world_repository = WorldSettingRepository(session)
 
     # Генерируем номер счета
     account_number = _generate_account_number()
-    interest_rate = _get_interest_rate_for_account_type(payload.account_type)
+    # Рассчитываем стартовую ставку от ключевой
+    key_rate = await world_repository.get_key_rate()
+    interest_rate = round(key_rate * _get_interest_ratio(payload.account_type), 2)
 
     # Создаем накопительный счет как UserItem
     account_meta = {
@@ -182,6 +185,35 @@ async def create_savings_account(
         account_id=user_item.id,
         account_number=account_number,
     )
+
+
+@router.get("/available", response_model=SavingsAvailableResponse)
+async def list_available_savings_products(
+    session: SessionDep,
+) -> SavingsAvailableResponse:
+    """
+    Список доступных типов накопительных счетов с текущими ставками (от ключевой).
+
+    Возвращает пары (тип, отображаемое имя, ставка), чтобы UI мог показать
+    пользователю актуальную ставку перед созданием счета.
+    """
+
+    world_repository = WorldSettingRepository(session)
+    key_rate = await world_repository.get_key_rate()
+
+    types = ["basic", "premium"]
+    products: list[SavingsAvailableProduct] = []
+    for t in types:
+        rate = round(key_rate * _get_interest_ratio(t), 2)
+        products.append(
+            SavingsAvailableProduct(
+                account_type=t,
+                account_name=_get_savings_display_name(t),
+                interest_rate=rate,
+            )
+        )
+
+    return SavingsAvailableResponse(products=products)
 
 
 @router.get("/{account_id}", response_model=SavingsAccountDetail)

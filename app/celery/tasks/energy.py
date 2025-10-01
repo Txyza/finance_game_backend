@@ -7,7 +7,12 @@ from typing import Final
 from app.celery import celery_app
 from app.core.constants import USER_ACTIVITY_KEY_PREFIX
 from app.core.redis import redis_client
-from app.db.database import async_session_maker
+from app.db.database import (
+    DATABASE_URL,
+    create_async_engine,
+    settings,
+    async_sessionmaker,
+)
 from app.repositories import ItemRepository, UserItemRepository, UserRepository
 from app.schemas import UserUpdate
 from app.api.utils import (
@@ -30,6 +35,9 @@ def recover_inactive_users() -> int:
 
 
 async def _recover_inactive_users() -> int:
+    engine = create_async_engine(DATABASE_URL, echo=settings.DEBUG, future=True)
+    async_session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
+
     updated = 0
 
     async with async_session_maker() as session:

@@ -6,7 +6,12 @@ from datetime import datetime, timezone
 from typing import Final
 
 from app.celery import celery_app
-from app.db.database import async_session_maker
+from app.db.database import (
+    DATABASE_URL,
+    create_async_engine,
+    settings,
+    async_sessionmaker,
+)
 from app.repositories import UserItemRepository
 
 logger = logging.getLogger(__name__)
@@ -22,6 +27,9 @@ def cleanup_expired_user_items() -> int:
 
 
 async def _cleanup_expired_user_items() -> int:
+    engine = create_async_engine(DATABASE_URL, echo=settings.DEBUG, future=True)
+    async_session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
+    
     now = datetime.now(timezone.utc)
     processed_total = 0
 

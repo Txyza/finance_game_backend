@@ -94,8 +94,7 @@ services:
       - finance-game-network
     command: >
       sh -c "
-        alembic upgrade head &&
-        celery -A app.celery worker --loglevel=info --beat
+        celery -A app.celery worker --loglevel=info --beat -Q financial,maintenance,celery
       "
 
 volumes:

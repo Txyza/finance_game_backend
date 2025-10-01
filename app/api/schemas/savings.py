@@ -80,3 +80,17 @@ class SavingsAccountTransactionsResponse(BaseModel):
 
     account_id: uuid.UUID
     transactions: list[SavingsAccountTransaction]
+
+
+class SavingsAvailableProduct(BaseModel):
+    """Карточка доступного типа накопительного счёта с текущей ставкой."""
+
+    account_type: str = Field(description="Тип счета (basic, premium)")
+    account_name: str = Field(description="Отображаемое имя счёта")
+    interest_rate: float = Field(ge=0, description="Текущая ставка в процентах годовых")
+
+
+class SavingsAvailableResponse(BaseModel):
+    """Ответ со списком доступных накопительных продуктов и их текущих ставок."""
+
+    products: list[SavingsAvailableProduct]

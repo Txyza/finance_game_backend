@@ -58,6 +58,15 @@ class ItemRepository:
         await self._session.refresh(instance)
         return ItemRead.model_validate(instance)
 
+    async def list_priced_items(
+        self, *, offset: int = 0, limit: int = 10_000
+    ) -> list[ItemRead]:
+        """Return all items with price > 0 for inflation updates."""
+        result = await self._session.execute(
+            select(Item).where(Item.price > 0).offset(offset).limit(limit)
+        )
+        return self._map_many(result.scalars().all())
+
     async def delete(self, name: str) -> bool:
         instance = await self._session.get(Item, name)
         if instance is None:

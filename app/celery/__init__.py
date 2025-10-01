@@ -29,6 +29,11 @@ celery_app.conf.update(
             "schedule": crontab(hour=0, minute=0),
             "options": {"queue": "financial"},
         },
+        "weekly-key-rate-update": {
+            "task": "app.celery.tasks.financial_events.update_key_rate",
+            "schedule": crontab(day_of_week="mon", hour=0, minute=0),
+            "options": {"queue": "financial"},
+        },
         "check-expired-deposits": {
             "task": "app.celery.tasks.financial_events.process_expired_deposits",
             "schedule": crontab(minute=0),  # Каждый час
@@ -46,8 +51,13 @@ celery_app.conf.update(
         },
         "cleanup-expired-user-items": {
             "task": "app.celery.tasks.inventory.cleanup_expired_user_items",
-            "schedule": timedelta(hours=1),
+            "schedule": crontab(minute=5),
             "options": {"queue": "maintenance"},
+        },
+        "index-work-max-amount-yearly": {
+            "task": "app.celery.tasks.financial_events.index_work_max_amount_yearly",
+            "schedule": timedelta(days=28),
+            "options": {"queue": "financial"},
         },
     },
 )
