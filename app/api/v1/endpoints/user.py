@@ -168,7 +168,7 @@ async def _build_user_profile(
         capital=debet_total,
         energy=user.energy,
         max_energy=max_energy,
-        experience=10000000,
+        experience=user.experience,
         key_rate=key_rate,
         inflation=inflation,
         ready_to_reward_tasks_counts=ready_counts,
