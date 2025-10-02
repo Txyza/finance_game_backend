@@ -1,0 +1,32 @@
+# Core
+fastapi==0.117.1
+uvicorn[standard]
+pydantic==2.11.9
+pydantic-settings==2.11.0
+python-multipart==0.0.20
+
+# Database
+sqlalchemy==2.0.43
+asyncpg==0.30.0
+alembic==1.16.5
+greenlet==3.2.4
+
+# Redis & Celery
+redis==5.2.1
+celery[redis]==5.5.3
+celery-types==0.23.0
+
+# Security & Auth
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+python-decouple==3.8
+
+# Utils
+httpx==0.28.1
+orjson==3.11.3
+email-validator==2.3.0
+
+# Development
+pytest==8.4.2
+pytest-asyncio==1.2.0
+pytest-cov==7.0.0
