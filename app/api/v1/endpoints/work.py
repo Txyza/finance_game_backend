@@ -137,7 +137,7 @@ async def start_work(
     "/stop",
     response_model=WorkStopResponse,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(check_tasks({"daily_work_session": 1}).dependency())],
+    dependencies=[Depends(check_tasks({"Приступим к работе": 1}).dependency()), Depends(check_tasks({"Работник недели": 1}).dependency())],
 )
 async def stop_work(
     payload: WorkStopRequest,
