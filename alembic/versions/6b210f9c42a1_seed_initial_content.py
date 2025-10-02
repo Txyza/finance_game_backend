@@ -210,7 +210,7 @@ _TASKS_DATA = [
         "name": "Приступим к работе",
         "description": "Начните хотя бы одну рабочую сессию",
         "type": "quest",
-        "reward": 50,
+        "reward": 150,
         "reward_type": "exp",
         "progress_max_points": 1,
     },
